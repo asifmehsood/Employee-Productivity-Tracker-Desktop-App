@@ -1,0 +1,429 @@
+/// Database Helper
+/// Manages SQLite database operations for tasks, screenshots, and settings
+/// Uses sqflite_common_ffi for desktop platform support
+
+import 'dart:io';
+import 'package:path/path.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../models/task_model.dart';
+import '../../models/screenshot_model.dart';
+import '../constants/app_constants.dart';
+
+class DatabaseHelper {
+  static final DatabaseHelper instance = DatabaseHelper._init();
+  static Database? _database;
+
+  DatabaseHelper._init();
+
+  /// Get database instance (singleton pattern)
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDB();
+    return _database!;
+  }
+
+  /// Initialize database with proper desktop support
+  Future<Database> _initDB() async {
+    // Initialize FFI for desktop platforms
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+
+    // Get application documents directory
+    final documentsDirectory = await getApplicationDocumentsDirectory();
+    final dbPath = join(documentsDirectory.path, AppConstants.databaseName);
+
+    return await openDatabase(
+      dbPath,
+      version: AppConstants.databaseVersion,
+      onCreate: _createDB,
+      onUpgrade: _upgradeDB,
+    );
+  }
+
+  /// Create database tables
+  Future<void> _createDB(Database db, int version) async {
+    // Tasks table
+    await db.execute('''
+      CREATE TABLE tasks (
+        id TEXT PRIMARY KEY,
+        employee_id TEXT NOT NULL,
+        employee_name TEXT NOT NULL,
+        task_name TEXT NOT NULL,
+        task_description TEXT,
+        status TEXT DEFAULT 'active',
+        start_time INTEGER NOT NULL,
+        end_time INTEGER,
+        created_at INTEGER NOT NULL,
+        synced_to_odoo INTEGER DEFAULT 0
+      )
+    ''');
+
+    // Screenshots table
+    await db.execute('''
+      CREATE TABLE screenshots (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        local_path TEXT NOT NULL,
+        azure_url TEXT,
+        captured_at INTEGER NOT NULL,
+        uploaded INTEGER DEFAULT 0,
+        synced_to_odoo INTEGER DEFAULT 0,
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Settings table
+    await db.execute('''
+      CREATE TABLE settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    ''');
+
+    // Create indexes for better query performance
+    await db.execute('CREATE INDEX idx_task_status ON tasks(status)');
+    await db.execute('CREATE INDEX idx_task_employee ON tasks(employee_id)');
+    await db.execute('CREATE INDEX idx_screenshot_task ON screenshots(task_id)');
+    await db.execute('CREATE INDEX idx_screenshot_uploaded ON screenshots(uploaded)');
+  }
+
+  /// Handle database upgrades
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    // Add migration logic here when database schema changes
+    if (oldVersion < 2) {
+      // Add activity_logs table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS activity_logs (
+          id TEXT PRIMARY KEY,
+          task_id TEXT NOT NULL,
+          timestamp INTEGER NOT NULL,
+          activity_type TEXT NOT NULL,
+          details TEXT,
+          FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+        )
+      ''');
+      
+      // Add work_sessions table
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS work_sessions (
+          id TEXT PRIMARY KEY,
+          employee_id TEXT NOT NULL,
+          date INTEGER NOT NULL,
+          total_minutes_worked INTEGER DEFAULT 0,
+          total_minutes_idle INTEGER DEFAULT 0,
+          tasks_completed INTEGER DEFAULT 0,
+          tasks_started INTEGER DEFAULT 0
+        )
+      ''');
+    }
+  }
+
+  // ==================== TASK OPERATIONS ====================
+
+  /// Insert a new task
+  Future<int> insertTask(TaskModel task) async {
+    final db = await database;
+    return await db.insert('tasks', task.toMap());
+  }
+
+  /// Get all tasks
+  Future<List<TaskModel>> getAllTasks() async {
+    final db = await database;
+    final result = await db.query('tasks', orderBy: 'created_at DESC');
+    return result.map((map) => TaskModel.fromMap(map)).toList();
+  }
+
+  /// Get tasks by status
+  Future<List<TaskModel>> getTasksByStatus(String status) async {
+    final db = await database;
+    final result = await db.query(
+      'tasks',
+      where: 'status = ?',
+      whereArgs: [status],
+      orderBy: 'created_at DESC',
+    );
+    return result.map((map) => TaskModel.fromMap(map)).toList();
+  }
+
+  /// Get active task (only one should be active at a time)
+  Future<TaskModel?> getActiveTask() async {
+    final db = await database;
+    final result = await db.query(
+      'tasks',
+      where: 'status = ?',
+      whereArgs: [AppConstants.taskStatusActive],
+      limit: 1,
+    );
+    if (result.isEmpty) return null;
+    return TaskModel.fromMap(result.first);
+  }
+
+  /// Get task by ID
+  Future<TaskModel?> getTaskById(String id) async {
+    final db = await database;
+    final result = await db.query(
+      'tasks',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (result.isEmpty) return null;
+    return TaskModel.fromMap(result.first);
+  }
+
+  /// Update task
+  Future<int> updateTask(TaskModel task) async {
+    final db = await database;
+    return await db.update(
+      'tasks',
+      task.toMap(),
+      where: 'id = ?',
+      whereArgs: [task.id],
+    );
+  }
+
+  /// Delete task
+  Future<int> deleteTask(String id) async {
+    final db = await database;
+    return await db.delete(
+      'tasks',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// Get unsynced tasks
+  Future<List<TaskModel>> getUnsyncedTasks() async {
+    final db = await database;
+    final result = await db.query(
+      'tasks',
+      where: 'synced_to_odoo = ?',
+      whereArgs: [AppConstants.syncStatusPending],
+    );
+    return result.map((map) => TaskModel.fromMap(map)).toList();
+  }
+
+  // ==================== SCREENSHOT OPERATIONS ====================
+
+  /// Insert a new screenshot
+  Future<int> insertScreenshot(ScreenshotModel screenshot) async {
+    final db = await database;
+    return await db.insert('screenshots', screenshot.toMap());
+  }
+
+  /// Get all screenshots for a task
+  Future<List<ScreenshotModel>> getScreenshotsByTask(String taskId) async {
+    final db = await database;
+    final result = await db.query(
+      'screenshots',
+      where: 'task_id = ?',
+      whereArgs: [taskId],
+      orderBy: 'captured_at DESC',
+    );
+    return result.map((map) => ScreenshotModel.fromMap(map)).toList();
+  }
+
+  /// Get all screenshots
+  Future<List<ScreenshotModel>> getAllScreenshots() async {
+    final db = await database;
+    final result = await db.query('screenshots', orderBy: 'captured_at DESC');
+    return result.map((map) => ScreenshotModel.fromMap(map)).toList();
+  }
+
+  /// Update screenshot
+  Future<int> updateScreenshot(ScreenshotModel screenshot) async {
+    final db = await database;
+    return await db.update(
+      'screenshots',
+      screenshot.toMap(),
+      where: 'id = ?',
+      whereArgs: [screenshot.id],
+    );
+  }
+
+  /// Delete screenshot
+  Future<int> deleteScreenshot(String id) async {
+    final db = await database;
+    return await db.delete(
+      'screenshots',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// Get unsynced screenshots
+  Future<List<ScreenshotModel>> getUnsyncedScreenshots() async {
+    final db = await database;
+    final result = await db.query(
+      'screenshots',
+      where: 'synced_to_odoo = ?',
+      whereArgs: [AppConstants.syncStatusPending],
+    );
+    return result.map((map) => ScreenshotModel.fromMap(map)).toList();
+  }
+
+  /// Get screenshots that need to be uploaded to Azure
+  Future<List<ScreenshotModel>> getScreenshotsToUpload() async {
+    final db = await database;
+    final result = await db.query(
+      'screenshots',
+      where: 'uploaded = ?',
+      whereArgs: [AppConstants.syncStatusPending],
+    );
+    return result.map((map) => ScreenshotModel.fromMap(map)).toList();
+  }
+
+  // ==================== SETTINGS OPERATIONS ====================
+
+  /// Save a setting
+  Future<int> saveSetting(String key, String value) async {
+    final db = await database;
+    return await db.insert(
+      'settings',
+      {'key': key, 'value': value},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Get a setting
+  Future<String?> getSetting(String key) async {
+    final db = await database;
+    final result = await db.query(
+      'settings',
+      where: 'key = ?',
+      whereArgs: [key],
+      limit: 1,
+    );
+    if (result.isEmpty) return null;
+    return result.first['value'] as String;
+  }
+
+  /// Delete a setting
+  Future<int> deleteSetting(String key) async {
+    final db = await database;
+    return await db.delete(
+      'settings',
+      where: 'key = ?',
+      whereArgs: [key],
+    );
+  }
+
+  /// Get all settings
+  Future<Map<String, String>> getAllSettings() async {
+    final db = await database;
+    final result = await db.query('settings');
+    return Map.fromEntries(
+      result.map((row) => MapEntry(row['key'] as String, row['value'] as String)),
+    );
+  }
+
+  // ==================== UTILITY OPERATIONS ====================
+
+  /// Get statistics
+  Future<Map<String, int>> getStatistics() async {
+    final db = await database;
+    
+    final totalTasksResult = await db.rawQuery('SELECT COUNT(*) as count FROM tasks');
+    final totalTasks = totalTasksResult.first['count'] as int? ?? 0;
+    
+    final activeTasksResult = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM tasks WHERE status = ?',
+      [AppConstants.taskStatusActive],
+    );
+    final activeTasks = activeTasksResult.first['count'] as int? ?? 0;
+    
+    final completedTasksResult = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM tasks WHERE status = ?',
+      [AppConstants.taskStatusCompleted],
+    );
+    final completedTasks = completedTasksResult.first['count'] as int? ?? 0;
+    
+    final totalScreenshotsResult = await db.rawQuery('SELECT COUNT(*) as count FROM screenshots');
+    final totalScreenshots = totalScreenshotsResult.first['count'] as int? ?? 0;
+    
+    final uploadedScreenshotsResult = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM screenshots WHERE uploaded = 1',
+    );
+    final uploadedScreenshots = uploadedScreenshotsResult.first['count'] as int? ?? 0;
+
+    return {
+      'totalTasks': totalTasks,
+      'activeTasks': activeTasks,
+      'completedTasks': completedTasks,
+      'totalScreenshots': totalScreenshots,
+      'uploadedScreenshots': uploadedScreenshots,
+    };
+  }
+
+  /// Clear all data (for testing or reset)
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.delete('screenshots');
+    await db.delete('tasks');
+    await db.delete('settings');
+  }
+
+  /// Close database
+  Future<void> close() async {
+    final db = await database;
+    await db.close();
+  }
+  
+  // ==================== ACTIVITY LOG OPERATIONS ====================
+  
+  /// Insert activity log
+  Future<void> insertActivityLog(dynamic activityLog) async {
+    final db = await database;
+    await db.insert('activity_logs', activityLog.toMap());
+  }
+  
+  /// Get activity logs for a task
+  Future<List<Map<String, dynamic>>> getActivityLogsForTask(String taskId) async {
+    final db = await database;
+    return await db.query(
+      'activity_logs',
+      where: 'task_id = ?',
+      whereArgs: [taskId],
+      orderBy: 'timestamp DESC',
+    );
+  }
+  
+  // ==================== WORK SESSION OPERATIONS ====================
+  
+  /// Get or create work session for date
+  Future<Map<String, dynamic>> getWorkSessionForDate(String employeeId, DateTime date) async {
+    final db = await database;
+    final dateOnly = DateTime(date.year, date.month, date.day);
+    
+    final result = await db.query(
+      'work_sessions',
+      where: 'employee_id = ? AND date = ?',
+      whereArgs: [employeeId, dateOnly.millisecondsSinceEpoch],
+    );
+    
+    if (result.isNotEmpty) {
+      return result.first;
+    }
+    
+    // Return empty session
+    return {
+      'total_minutes_worked': 0,
+      'total_minutes_idle': 0,
+      'tasks_completed': 0,
+      'tasks_started': 0,
+    };
+  }
+  
+  /// Update work session
+  Future<void> updateWorkSession(Map<String, dynamic> session) async {
+    final db = await database;
+    await db.insert(
+      'work_sessions',
+      session,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+}
