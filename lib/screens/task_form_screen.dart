@@ -92,7 +92,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                     style: TextStyle(
                       color: _startDateTime == null
                           ? Colors.grey[600]
-                          : Colors.black,
+                          : Colors.white,
                     ),
                   ),
                 ),
@@ -116,7 +116,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                     style: TextStyle(
                       color: _endDateTime == null
                           ? Colors.grey[600]
-                          : Colors.black,
+                          : Colors.white,
                     ),
                   ),
                 ),

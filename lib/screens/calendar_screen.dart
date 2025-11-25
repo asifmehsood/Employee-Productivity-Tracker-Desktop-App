@@ -1,5 +1,6 @@
 /// Calendar Screen
 /// Shows daily work hours in calendar view
+library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -192,7 +193,7 @@ class _CalendarViewState extends State<CalendarView> {
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight:
                                   isToday ? FontWeight.bold : FontWeight.normal,
-                              color: Colors.black87,
+                              color: Colors.white,
                             ),
                       ),
                       if (hasWork) ...[
@@ -200,7 +201,7 @@ class _CalendarViewState extends State<CalendarView> {
                         Text(
                           _formatMinutes(workMinutes),
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.black87,
+                                color: Colors.white70,
                               ),
                         ),
                       ],

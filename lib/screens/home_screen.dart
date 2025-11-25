@@ -13,6 +13,7 @@ import 'task_list_screen.dart';
 import 'settings_screen.dart';
 import 'calendar_screen.dart';
 import 'profile_screen.dart';
+import 'dashboard_screen.dart';
 import 'sign_in_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -69,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Consumer2<TaskProvider, AuthProvider>(
             builder: (context, taskProvider, authProvider, child) {
               return SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.fromLTRB(24.0, 100.0, 24.0, 24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -127,6 +128,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 leading: const Icon(Icons.home),
                 title: const Text('Task Creation'),
                 onTap: () => Navigator.pop(context),
+              ),
+              ListTile(
+                leading: const Icon(Icons.dashboard),
+                title: const Text('Dashboard'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                  );
+                },
               ),
               ListTile(
                 leading: const Icon(Icons.list_alt),
