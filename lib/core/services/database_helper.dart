@@ -57,6 +57,8 @@ class DatabaseHelper {
         status TEXT DEFAULT 'active',
         start_time INTEGER NOT NULL,
         end_time INTEGER,
+        paused_at INTEGER,
+        total_paused_duration INTEGER DEFAULT 0,
         scheduled_start_time INTEGER,
         scheduled_end_time INTEGER,
         created_at INTEGER NOT NULL,
@@ -127,6 +129,12 @@ class DatabaseHelper {
       // Add scheduled time columns to tasks table
       await db.execute('ALTER TABLE tasks ADD COLUMN scheduled_start_time INTEGER');
       await db.execute('ALTER TABLE tasks ADD COLUMN scheduled_end_time INTEGER');
+    }
+    
+    if (oldVersion < 4) {
+      // Add pause tracking columns
+      await db.execute('ALTER TABLE tasks ADD COLUMN paused_at INTEGER');
+      await db.execute('ALTER TABLE tasks ADD COLUMN total_paused_duration INTEGER DEFAULT 0');
     }
   }
 

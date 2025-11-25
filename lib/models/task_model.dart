@@ -12,6 +12,8 @@ class TaskModel {
   final String status; // active, paused, completed
   final DateTime startTime;
   final DateTime? endTime;
+  final DateTime? pausedAt; // When the task was paused
+  final int totalPausedDuration; // Total paused duration in milliseconds
   final DateTime? scheduledStartTime; // Scheduled start time from user
   final DateTime? scheduledEndTime;   // Scheduled end time from user
   final DateTime createdAt;
@@ -26,6 +28,8 @@ class TaskModel {
     required this.status,
     required this.startTime,
     this.endTime,
+    this.pausedAt,
+    this.totalPausedDuration = 0,
     this.scheduledStartTime,
     this.scheduledEndTime,
     required this.createdAt,
@@ -39,12 +43,25 @@ class TaskModel {
     
     // If task hasn't started yet (scheduled for future), return zero duration
     if (startTime.isAfter(now)) {
-      print('TaskModel.duration - Task: $taskName, Start time is in future. Start: $startTime, Now: $now');
       return Duration.zero;
     }
     
-    final calculatedDuration = end.difference(startTime);
-    print('TaskModel.duration - Task: $taskName, Start: $startTime, End: $end, Duration: ${calculatedDuration.inHours}h ${calculatedDuration.inMinutes % 60}m ${calculatedDuration.inSeconds % 60}s');
+    var calculatedDuration = end.difference(startTime);
+    
+    // Subtract total paused duration
+    calculatedDuration = calculatedDuration - Duration(milliseconds: totalPausedDuration);
+    
+    // If currently paused, don't include current pause time
+    if (isPaused && pausedAt != null) {
+      final currentPauseDuration = now.difference(pausedAt!);
+      calculatedDuration = calculatedDuration - currentPauseDuration;
+    }
+    
+    // Ensure non-negative duration
+    if (calculatedDuration.isNegative) {
+      return Duration.zero;
+    }
+    
     return calculatedDuration;
   }
   
@@ -74,6 +91,8 @@ class TaskModel {
       'status': status,
       'start_time': startTime.millisecondsSinceEpoch,
       'end_time': endTime?.millisecondsSinceEpoch,
+      'paused_at': pausedAt?.millisecondsSinceEpoch,
+      'total_paused_duration': totalPausedDuration,
       'scheduled_start_time': scheduledStartTime?.millisecondsSinceEpoch,
       'scheduled_end_time': scheduledEndTime?.millisecondsSinceEpoch,
       'created_at': createdAt.millisecondsSinceEpoch,
@@ -94,6 +113,10 @@ class TaskModel {
       endTime: map['end_time'] != null 
           ? DateTime.fromMillisecondsSinceEpoch(map['end_time'] as int)
           : null,
+      pausedAt: map['paused_at'] != null 
+          ? DateTime.fromMillisecondsSinceEpoch(map['paused_at'] as int)
+          : null,
+      totalPausedDuration: map['total_paused_duration'] as int? ?? 0,
       scheduledStartTime: map['scheduled_start_time'] != null 
           ? DateTime.fromMillisecondsSinceEpoch(map['scheduled_start_time'] as int)
           : null,
@@ -130,6 +153,8 @@ class TaskModel {
     String? status,
     DateTime? startTime,
     DateTime? endTime,
+    DateTime? pausedAt,
+    int? totalPausedDuration,
     DateTime? scheduledStartTime,
     DateTime? scheduledEndTime,
     DateTime? createdAt,
@@ -144,6 +169,8 @@ class TaskModel {
       status: status ?? this.status,
       startTime: startTime ?? this.startTime,
       endTime: endTime ?? this.endTime,
+      pausedAt: pausedAt,
+      totalPausedDuration: totalPausedDuration ?? this.totalPausedDuration,
       scheduledStartTime: scheduledStartTime ?? this.scheduledStartTime,
       scheduledEndTime: scheduledEndTime ?? this.scheduledEndTime,
       createdAt: createdAt ?? this.createdAt,

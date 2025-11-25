@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/auth_provider.dart';
 import '../core/utils/date_time_helper.dart';
+import '../core/constants/app_constants.dart';
 import 'task_form_screen.dart';
 import 'task_list_screen.dart';
 import 'settings_screen.dart';
@@ -231,7 +232,21 @@ class _HomeScreenState extends State<HomeScreen> {
     final task = taskProvider.activeTask!;
     final timerService = taskProvider.timerService;
     final now = DateTime.now();
-    final isScheduledForFuture = task.startTime.isAfter(now);
+    
+    // Determine status label and color based on actual task status
+    String statusLabel;
+    Color statusColor;
+    
+    if (task.status == AppConstants.taskStatusPaused) {
+      statusLabel = 'PAUSED TASK';
+      statusColor = Colors.orange[700]!;
+    } else if (task.startTime.isAfter(now)) {
+      statusLabel = 'SCHEDULED TASK';
+      statusColor = Colors.blue;
+    } else {
+      statusLabel = 'ACTIVE TASK';
+      statusColor = Colors.green;
+    }
 
     return Card(
       elevation: 4,
@@ -242,11 +257,11 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              isScheduledForFuture ? 'SCHEDULED TASK' : 'ACTIVE TASK',
+              statusLabel,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: isScheduledForFuture ? Colors.orange : Colors.green,
+                color: statusColor,
                 letterSpacing: 1.2,
               ),
               textAlign: TextAlign.center,
@@ -295,7 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
             
             const SizedBox(height: 8),
             Text(
-              isScheduledForFuture 
+              task.startTime.isAfter(now)
                   ? 'Will start: ${DateTimeHelper.formatDateTime(task.startTime)}'
                   : 'Started: ${DateTimeHelper.formatDateTime(task.startTime)}',
               style: TextStyle(
@@ -352,19 +367,38 @@ class _HomeScreenState extends State<HomeScreen> {
               runSpacing: 12,
               alignment: WrapAlignment.center,
               children: [
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await _pauseTask(taskProvider, task.id);
-                  },
-                  icon: const Icon(Icons.pause),
-                  label: const Text('Pause'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 14,
+                // Show Pause button only when task is active, not paused
+                if (task.status == AppConstants.taskStatusActive)
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      await _pauseTask(taskProvider, task.id);
+                    },
+                    icon: const Icon(Icons.pause),
+                    label: const Text('Pause'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
                     ),
                   ),
-                ),
+                // Show Resume button only when task is paused
+                if (task.status == AppConstants.taskStatusPaused)
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      await _resumeTask(taskProvider, task.id);
+                    },
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Resume'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                    ),
+                  ),
                 ElevatedButton.icon(
                   onPressed: () async {
                     await _stopTask(taskProvider, task.id);
@@ -538,6 +572,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (confirmed == true) {
       await taskProvider.pauseTask(taskId);
+    }
+  }
+
+  Future<void> _resumeTask(TaskProvider taskProvider, String taskId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Resume Task'),
+        content: const Text('Are you sure you want to resume this task?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Resume'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final success = await taskProvider.resumeTask(taskId);
+      if (!success && context.mounted) {
+        // Show message if resume was blocked (stop time reached)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task has reached its scheduled end time and has been completed.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     }
   }
 

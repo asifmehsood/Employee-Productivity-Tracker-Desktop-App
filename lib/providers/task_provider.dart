@@ -135,6 +135,22 @@ class TaskProvider with ChangeNotifier {
           print('\n=== STARTING DELAYED TASK ===');
           print('Time now: ${DateTime.now()}');
           print('Starting timer and screenshots for task: ${task.id}');
+          
+          // Update task status to active (was created but not truly active until now)
+          final activeTask = task.copyWith(status: AppConstants.taskStatusActive);
+          await _db.updateTask(activeTask);
+          
+          final index = _tasks.indexWhere((t) => t.id == task.id);
+          if (index != -1) {
+            _tasks[index] = activeTask;
+          }
+          if (_activeTask?.id == task.id) {
+            _activeTask = activeTask;
+          }
+          
+          notifyListeners();
+          print('Task status updated to ACTIVE');
+          
           await _timerService.start(task.id);
           print('=== DELAYED TASK START COMPLETE ===\n');
         });
@@ -182,10 +198,44 @@ class TaskProvider with ChangeNotifier {
     // Schedule the stop
     print('Auto-stop scheduled successfully');
     print('=== SCHEDULING COMPLETE ===\n');
-    Future.delayed(duration, () {
+    Future.delayed(duration, () async {
       print('\n=== AUTO-STOP TRIGGERED ===');
-      print('Stopping task at: ${DateTime.now()}');
-      stopTask(taskId);
+      print('Checking task status at: ${DateTime.now()}');
+      
+      // Find the task to check if it's paused
+      final taskIndex = _tasks.indexWhere((t) => t.id == taskId);
+      if (taskIndex == -1) {
+        print('Task not found, may have been deleted');
+        return;
+      }
+      
+      final task = _tasks[taskIndex];
+      print('Task status: ${task.status}');
+      
+      if (task.status == AppConstants.taskStatusPaused) {
+        print('Task is paused. Completing without timer stop.');
+        
+        // Complete the task directly without stopping timer (already stopped)
+        final completedTask = task.copyWith(
+          status: AppConstants.taskStatusCompleted,
+          endTime: scheduledEndTime, // Use scheduled end time, not now
+        );
+        
+        await _db.updateTask(completedTask);
+        _tasks[taskIndex] = completedTask;
+        
+        if (_activeTask?.id == taskId) {
+          _activeTask = null;
+        }
+        
+        notifyListeners();
+        print('Paused task auto-completed at scheduled end time');
+      } else {
+        print('Task is active. Stopping normally.');
+        await stopTask(taskId);
+      }
+      
+      print('=== AUTO-STOP COMPLETE ===\n');
     });
   }
 
@@ -237,12 +287,23 @@ class TaskProvider with ChangeNotifier {
   /// Pause a task
   Future<bool> pauseTask(String taskId) async {
     try {
+      print('\n=== PAUSING TASK ===');
+      print('Task ID: $taskId');
+      
       final task = _tasks.firstWhere((t) => t.id == taskId);
+      print('Current task status: ${task.status}');
+      print('Time now: ${DateTime.now()}');
+      
+      // Record pause time
+      final pausedAt = DateTime.now();
       final updatedTask = task.copyWith(
         status: AppConstants.taskStatusPaused,
+        pausedAt: pausedAt,
       );
+      print('Pause time recorded: $pausedAt');
 
       await _db.updateTask(updatedTask);
+      print('Task updated in database');
 
       // Update state
       final index = _tasks.indexWhere((t) => t.id == taskId);
@@ -252,14 +313,18 @@ class TaskProvider with ChangeNotifier {
 
       if (_activeTask?.id == taskId) {
         _activeTask = updatedTask;
-        await _timerService.pause();
+        // Stop the timer service completely
+        await _timerService.stop();
+        print('Timer service stopped');
       }
 
       notifyListeners();
       print('Task paused: ${updatedTask.taskName}');
+      print('=== PAUSE COMPLETE ===\n');
       return true;
     } catch (e) {
-      print('Error pausing task: $e');
+      print('ERROR pausing task: $e');
+      print('Stack trace: ${StackTrace.current}');
       return false;
     }
   }
@@ -267,12 +332,63 @@ class TaskProvider with ChangeNotifier {
   /// Resume a paused task
   Future<bool> resumeTask(String taskId) async {
     try {
+      print('\n=== RESUMING TASK ===');
+      print('Task ID: $taskId');
+      
       final task = _tasks.firstWhere((t) => t.id == taskId);
+      print('Current task status: ${task.status}');
+      print('Paused at: ${task.pausedAt}');
+      print('Previous total paused duration: ${task.totalPausedDuration}ms');
+      
+      // Check if stop time has passed while paused
+      final now = DateTime.now();
+      if (task.scheduledEndTime != null && now.isAfter(task.scheduledEndTime!)) {
+        print('Stop time has passed while task was paused. Completing task instead of resuming.');
+        print('Stop time was: ${task.scheduledEndTime}');
+        print('Current time: $now');
+        
+        // Complete the task without allowing resume
+        final completedTask = task.copyWith(
+          status: AppConstants.taskStatusCompleted,
+          endTime: task.scheduledEndTime, // Use the scheduled end time
+        );
+        
+        await _db.updateTask(completedTask);
+        
+        final index = _tasks.indexWhere((t) => t.id == taskId);
+        if (index != -1) {
+          _tasks[index] = completedTask;
+        }
+        
+        if (_activeTask?.id == taskId) {
+          _activeTask = null;
+        }
+        
+        notifyListeners();
+        print('Task auto-completed due to stop time being reached while paused');
+        print('=== AUTO-COMPLETE ON RESUME COMPLETE ===\n');
+        return false; // Return false to indicate resume was not allowed
+      }
+      
+      // Calculate pause duration and accumulate it
+      int additionalPausedDuration = 0;
+      if (task.pausedAt != null) {
+        additionalPausedDuration = now.difference(task.pausedAt!).inMilliseconds;
+        print('This pause lasted: ${additionalPausedDuration}ms');
+      }
+      
+      final newTotalPausedDuration = task.totalPausedDuration + additionalPausedDuration;
+      print('New total paused duration: ${newTotalPausedDuration}ms');
+      
       final updatedTask = task.copyWith(
         status: AppConstants.taskStatusActive,
+        pausedAt: null, // Clear pause timestamp
+        totalPausedDuration: newTotalPausedDuration,
       );
+      print('Resume time: $now');
 
       await _db.updateTask(updatedTask);
+      print('Task updated in database');
 
       // Update state
       final index = _tasks.indexWhere((t) => t.id == taskId);
@@ -281,13 +397,18 @@ class TaskProvider with ChangeNotifier {
       }
 
       _activeTask = updatedTask;
-      await _timerService.resume(taskId);
+      
+      // Restart the timer service
+      await _timerService.start(taskId);
+      print('Timer service restarted');
 
       notifyListeners();
       print('Task resumed: ${updatedTask.taskName}');
+      print('=== RESUME COMPLETE ===\n');
       return true;
     } catch (e) {
-      print('Error resuming task: $e');
+      print('ERROR resuming task: $e');
+      print('Stack trace: ${StackTrace.current}');
       return false;
     }
   }
