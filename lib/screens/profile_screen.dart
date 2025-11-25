@@ -1,5 +1,6 @@
 /// Profile Screen
 /// Display user information and settings
+library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -43,14 +44,6 @@ class ProfileScreen extends StatelessWidget {
                   employee.name,
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
-                const SizedBox(height: 8),
-                // Employee ID
-                Text(
-                  'ID: ${employee.id}',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                ),
                 const SizedBox(height: 32),
                 // Profile Information Cards
                 _buildInfoCard(
@@ -58,12 +51,6 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.email,
                   title: 'Email',
                   value: employee.email.isNotEmpty ? employee.email : 'Not provided',
-                ),
-                _buildInfoCard(
-                  context,
-                  icon: Icons.badge,
-                  title: 'Employee ID',
-                  value: employee.id,
                 ),
                 _buildInfoCard(
                   context,

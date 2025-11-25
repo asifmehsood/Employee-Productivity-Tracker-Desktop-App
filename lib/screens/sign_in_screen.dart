@@ -32,8 +32,32 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.topLeft,
+            radius: 2.0,
+            colors: [
+              const Color(0xFF1c4d2c).withOpacity(0.3),
+              Colors.black,
+              Colors.black,
+            ],
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.transparent,
+                const Color(0xFF1c4d2c).withOpacity(0.1),
+                Colors.transparent,
+              ],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
+          ),
+          child: Center(
+            child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
@@ -167,6 +191,8 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
             ),
           ),
+        ),
+        ),
         ),
       ),
     );

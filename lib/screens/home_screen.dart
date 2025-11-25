@@ -26,28 +26,57 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Task Creation'),
+        title: const Text('Task Creation', style: TextStyle(fontWeight: FontWeight.w600)),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.black.withOpacity(0.8),
+                const Color(0xFF1c4d2c).withOpacity(0.2),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       drawer: _buildDrawer(context),
-      body: Consumer2<TaskProvider, AuthProvider>(
-        builder: (context, taskProvider, authProvider, child) {
-          return SingleChildScrollView(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.topRight,
+            radius: 1.5,
+            colors: [
+              Color(0xFF1a1a1a),
+              Color(0xFF0d0d0d),
+            ],
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF1c4d2c).withOpacity(0.05),
+                Colors.transparent,
+                const Color(0xFF1c4d2c).withOpacity(0.03),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Consumer2<TaskProvider, AuthProvider>(
+            builder: (context, taskProvider, authProvider, child) {
+              return SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Employee Info Card
-                _buildEmployeeCard(authProvider),
-                const SizedBox(height: 24),
-
                 // Active Task Section
-                SizedBox(
-                  height: 400,
-                  child: taskProvider.hasActiveTask
-                      ? _buildActiveTaskSection(taskProvider)
-                      : _buildNoActiveTaskSection(context, authProvider),
-                ),
+                taskProvider.hasActiveTask
+                    ? _buildActiveTaskSection(taskProvider)
+                    : _buildNoActiveTaskSection(context, authProvider),
 
                 // Statistics
                 const SizedBox(height: 24),
@@ -56,50 +85,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildEmployeeCard(AuthProvider authProvider) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            const CircleAvatar(
-              radius: 30,
-              child: Icon(Icons.person, size: 30),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    authProvider.employeeName,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'ID: ${authProvider.employeeId}',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
-  
+
   Widget _buildDrawer(BuildContext context) {
     return Drawer(
       child: Consumer<AuthProvider>(
@@ -128,10 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       authProvider.employeeName,
                       style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    Text(
-                      'ID: ${authProvider.employeeId}',
-                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
                 ),
@@ -250,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Card(
       elevation: 4,
-      child: SingleChildScrollView(
+      child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -391,11 +378,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: const Icon(Icons.play_arrow),
                     label: const Text('Resume'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: const Color(0xFF1c4d2c),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
                         vertical: 14,
+                      ),
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                   ),
@@ -406,11 +397,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: const Icon(Icons.stop),
                   label: const Text('Stop & Complete'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: const Color(0xFF2a2a2a),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
                       vertical: 14,
+                    ),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: Color(0xFFff5252), width: 1),
                     ),
                   ),
                 ),
@@ -421,11 +417,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: const Icon(Icons.add_task),
                   label: const Text('New Task'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: const Color(0xFF1c4d2c),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
                       vertical: 14,
+                    ),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),

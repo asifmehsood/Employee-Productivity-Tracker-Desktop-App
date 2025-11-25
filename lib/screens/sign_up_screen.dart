@@ -32,14 +32,50 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sign Up'),
+        title: const Text('Sign Up', style: TextStyle(fontWeight: FontWeight.w600)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.black.withOpacity(0.8),
+                const Color(0xFF1c4d2c).withOpacity(0.2),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
-      body: Center(
-        child: SingleChildScrollView(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.topRight,
+            radius: 2.0,
+            colors: [
+              const Color(0xFF1c4d2c).withOpacity(0.3),
+              Colors.black,
+              Colors.black,
+            ],
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.transparent,
+                const Color(0xFF1c4d2c).withOpacity(0.1),
+                Colors.transparent,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Center(
+            child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
@@ -209,6 +245,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
             ),
           ),
+        ),
+        ),
         ),
       ),
     );

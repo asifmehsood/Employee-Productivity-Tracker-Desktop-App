@@ -60,26 +60,96 @@ class MyApp extends StatelessWidget {
         title: AppConstants.appName,
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.deepPurple,
-            secondary: Colors.teal,
-            brightness: Brightness.light,
+          colorScheme: ColorScheme.dark(
+            primary: const Color(0xFF1c4d2c), // Main green
+            secondary: const Color(0xFF2d7a47), // Lighter green
+            tertiary: const Color(0xFF0f2619), // Darkest green
+            surface: const Color(0xFF1a1a1a), // Dark card background
+            background: const Color(0xFF0d0d0d), // Pure dark background
+            onPrimary: Colors.white,
+            onSecondary: Colors.white,
+            onSurface: const Color(0xFFe8e8e8), // Light text
+            onBackground: const Color(0xFFe8e8e8),
+            error: const Color(0xFFff5252),
+            brightness: Brightness.dark,
           ),
           useMaterial3: true,
+          scaffoldBackgroundColor: const Color(0xFF0d0d0d),
           cardTheme: CardThemeData(
-            elevation: AppConstants.cardElevation,
+            elevation: 8,
+            shadowColor: const Color(0xFF1c4d2c).withOpacity(0.3),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppConstants.defaultBorderRadius),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            color: const Color(0xFF1a1a1a),
+          ),
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            backgroundColor: Color(0xFF1c4d2c),
+            foregroundColor: Colors.white,
+            elevation: 8,
+          ),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1c4d2c),
+              foregroundColor: Colors.white,
+              elevation: 4,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
-          floatingActionButtonTheme: FloatingActionButtonThemeData(
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF2d7a47),
+            ),
           ),
-          appBarTheme: AppBarTheme(
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
-            elevation: 2,
+          textTheme: const TextTheme(
+            displayLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            displayMedium: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            displaySmall: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            headlineLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            headlineMedium: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            headlineSmall: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            titleLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            titleMedium: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+            titleSmall: TextStyle(color: Color(0xFFb0b0b0)),
+            bodyLarge: TextStyle(color: Color(0xFFe8e8e8)),
+            bodyMedium: TextStyle(color: Color(0xFFb0b0b0)),
+            bodySmall: TextStyle(color: Color(0xFF808080)),
+            labelLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: const Color(0xFF1a1a1a),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF2a2a2a)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF2a2a2a)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFF1c4d2c), width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xFFff5252)),
+            ),
+            labelStyle: const TextStyle(color: Color(0xFFb0b0b0)),
+            hintStyle: const TextStyle(color: Color(0xFF606060)),
+          ),
+          dividerTheme: const DividerThemeData(
+            color: Color(0xFF2a2a2a),
+            thickness: 1,
           ),
         ),
         home: const AppInitializer(),
