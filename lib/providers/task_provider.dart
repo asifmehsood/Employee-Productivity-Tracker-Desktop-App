@@ -1,6 +1,7 @@
 /// Task Provider
 /// Manages task state and operations using Provider pattern
 /// Handles CRUD operations, status updates, and synchronization
+library;
 
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
@@ -77,13 +78,26 @@ class TaskProvider with ChangeNotifier {
     required String employeeName,
     required String taskName,
     required String taskDescription,
+    DateTime? scheduledStartTime,
+    DateTime? scheduledEndTime,
   }) async {
     try {
+      print('\n=== CREATING NEW TASK ===');
+      print('Task Name: $taskName');
+      print('Scheduled Start Time: $scheduledStartTime');
+      print('Scheduled End Time: $scheduledEndTime');
+      print('Current Time: ${DateTime.now()}');
+      
       // Stop any currently active task
       if (_activeTask != null) {
+        print('Stopping previous active task: ${_activeTask!.taskName}');
         await stopTask(_activeTask!.id);
       }
 
+      // Use scheduled start time or current time
+      final actualStartTime = scheduledStartTime ?? DateTime.now();
+      print('Actual Start Time (used for task): $actualStartTime');
+      
       // Create new task
       final task = TaskModel(
         id: _uuid.v4(),
@@ -92,56 +106,130 @@ class TaskProvider with ChangeNotifier {
         taskName: taskName,
         taskDescription: taskDescription,
         status: AppConstants.taskStatusActive,
-        startTime: DateTime.now(),
+        startTime: actualStartTime,
+        scheduledStartTime: scheduledStartTime,
+        scheduledEndTime: scheduledEndTime,
         createdAt: DateTime.now(),
       );
 
+      print('Task created with ID: ${task.id}');
+      print('Task startTime stored: ${task.startTime}');
+
       // Save to database
       await _db.insertTask(task);
+      print('Task saved to database');
 
       // Update state
       _activeTask = task;
       _tasks.insert(0, task);
+      print('Active task updated in provider');
 
-      // Start timer for screenshot capture
-      await _timerService.start(task.id);
+      // Check if we need to delay the start
+      final now = DateTime.now();
+      if (actualStartTime.isAfter(now)) {
+        final delayDuration = actualStartTime.difference(now);
+        print('Task scheduled for future. Delaying actual start by: ${delayDuration.inMinutes} minutes ${delayDuration.inSeconds % 60} seconds');
+        
+        // Schedule the actual task start (timer and screenshots)
+        Future.delayed(delayDuration, () async {
+          print('\n=== STARTING DELAYED TASK ===');
+          print('Time now: ${DateTime.now()}');
+          print('Starting timer and screenshots for task: ${task.id}');
+          await _timerService.start(task.id);
+          print('=== DELAYED TASK START COMPLETE ===\n');
+        });
+      } else {
+        // Start immediately if start time is now or in the past
+        print('Starting timer and screenshots immediately');
+        await _timerService.start(task.id);
+        print('Timer service started');
+      }
+
+      // Schedule auto-stop if end time is provided
+      if (scheduledEndTime != null) {
+        print('Scheduling auto-stop at: $scheduledEndTime');
+        _scheduleTaskStop(task.id, scheduledEndTime);
+      }
 
       notifyListeners();
+      print('Listeners notified');
       print('Task started: ${task.taskName}');
+      print('=== TASK CREATION COMPLETE ===\n');
       return task;
     } catch (e) {
-      print('Error starting task: $e');
+      print('ERROR creating task: $e');
+      print('Stack trace: ${StackTrace.current}');
       return null;
     }
+  }
+
+  /// Schedule automatic task stop at scheduled end time
+  void _scheduleTaskStop(String taskId, DateTime scheduledEndTime) {
+    final now = DateTime.now();
+    final duration = scheduledEndTime.difference(now);
+    
+    print('\n=== SCHEDULING AUTO-STOP ===');
+    print('Current time: $now');
+    print('Scheduled end time: $scheduledEndTime');
+    print('Duration until stop: ${duration.inMinutes} minutes ${duration.inSeconds % 60} seconds');
+    
+    if (duration.isNegative) {
+      print('WARNING: End time is in the past! Stopping immediately.');
+      stopTask(taskId);
+      return;
+    }
+    
+    // Schedule the stop
+    print('Auto-stop scheduled successfully');
+    print('=== SCHEDULING COMPLETE ===\n');
+    Future.delayed(duration, () {
+      print('\n=== AUTO-STOP TRIGGERED ===');
+      print('Stopping task at: ${DateTime.now()}');
+      stopTask(taskId);
+    });
   }
 
   /// Stop/Complete a task
   Future<bool> stopTask(String taskId) async {
     try {
+      print('\n=== STOPPING TASK ===');
+      print('Task ID to stop: $taskId');
+      print('Current active task: ${_activeTask?.id}');
+      print('Current time: ${DateTime.now()}');
+      
       final task = _tasks.firstWhere((t) => t.id == taskId);
+      print('Found task to stop: ${task.taskName}');
+      
       final updatedTask = task.copyWith(
         status: AppConstants.taskStatusCompleted,
         endTime: DateTime.now(),
       );
 
       await _db.updateTask(updatedTask);
+      print('Task updated in database');
 
       // Update state
       final index = _tasks.indexWhere((t) => t.id == taskId);
       if (index != -1) {
         _tasks[index] = updatedTask;
+        print('Task updated in list at index: $index');
       }
 
       if (_activeTask?.id == taskId) {
+        print('Clearing active task');
         _activeTask = null;
         await _timerService.stop();
+        print('Timer service stopped');
       }
 
       notifyListeners();
+      print('Listeners notified');
       print('Task stopped: ${updatedTask.taskName}');
+      print('=== TASK STOP COMPLETE ===\n');
       return true;
     } catch (e) {
-      print('Error stopping task: $e');
+      print('ERROR stopping task: $e');
+      print('Stack trace: ${StackTrace.current}');
       return false;
     }
   }

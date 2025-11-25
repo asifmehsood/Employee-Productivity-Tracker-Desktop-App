@@ -295,6 +295,8 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
       employeeName: authProvider.employeeName,
       taskName: _taskNameController.text.trim(),
       taskDescription: _taskDescriptionController.text.trim(),
+      scheduledStartTime: _startDateTime,
+      scheduledEndTime: _endDateTime,
     );
 
     setState(() => _isSubmitting = false);

@@ -1,6 +1,7 @@
 /// Database Helper
 /// Manages SQLite database operations for tasks, screenshots, and settings
 /// Uses sqflite_common_ffi for desktop platform support
+library;
 
 import 'dart:io';
 import 'package:path/path.dart';
@@ -56,6 +57,8 @@ class DatabaseHelper {
         status TEXT DEFAULT 'active',
         start_time INTEGER NOT NULL,
         end_time INTEGER,
+        scheduled_start_time INTEGER,
+        scheduled_end_time INTEGER,
         created_at INTEGER NOT NULL,
         synced_to_odoo INTEGER DEFAULT 0
       )
@@ -118,6 +121,12 @@ class DatabaseHelper {
           tasks_started INTEGER DEFAULT 0
         )
       ''');
+    }
+    
+    if (oldVersion < 3) {
+      // Add scheduled time columns to tasks table
+      await db.execute('ALTER TABLE tasks ADD COLUMN scheduled_start_time INTEGER');
+      await db.execute('ALTER TABLE tasks ADD COLUMN scheduled_end_time INTEGER');
     }
   }
 

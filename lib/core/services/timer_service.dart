@@ -1,6 +1,7 @@
 /// Timer Service
 /// Manages periodic screenshot capture based on configured interval
 /// Runs in background and only captures when a task is active
+library;
 
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -82,8 +83,28 @@ class TimerService {
     _activeTaskId = taskId;
     _isRunning = true;
 
-    // Take first screenshot immediately
-    await _captureScreenshot();
+    print('Timer starting for task: $taskId');
+    print('Current time: ${DateTime.now()}');
+    print('Task start time: ${task.startTime}');
+    
+    // Check if task start time is in the future
+    final now = DateTime.now();
+    if (task.startTime.isAfter(now)) {
+      final delay = task.startTime.difference(now);
+      print('Task starts in the future. Waiting ${delay.inMinutes} minutes ${delay.inSeconds % 60} seconds before first screenshot');
+      
+      // Schedule first screenshot at task start time
+      Future.delayed(delay, () async {
+        if (_isRunning && _activeTaskId == taskId) {
+          print('\n=== SCHEDULED TASK START - Taking first screenshot ===');
+          await _captureScreenshot();
+        }
+      });
+    } else {
+      // Task starts now or in the past, take screenshot immediately
+      print('Task start time is now or in the past. Taking first screenshot immediately.');
+      await _captureScreenshot();
+    }
 
     // Start periodic timer
     _timer = Timer.periodic(

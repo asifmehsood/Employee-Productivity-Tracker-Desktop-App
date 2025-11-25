@@ -230,6 +230,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildActiveTaskSection(TaskProvider taskProvider) {
     final task = taskProvider.activeTask!;
     final timerService = taskProvider.timerService;
+    final now = DateTime.now();
+    final isScheduledForFuture = task.startTime.isAfter(now);
 
     return Card(
       elevation: 4,
@@ -239,12 +241,12 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'ACTIVE TASK',
+            Text(
+              isScheduledForFuture ? 'SCHEDULED TASK' : 'ACTIVE TASK',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Colors.green,
+                color: isScheduledForFuture ? Colors.orange : Colors.green,
                 letterSpacing: 1.2,
               ),
               textAlign: TextAlign.center,
@@ -274,8 +276,13 @@ class _HomeScreenState extends State<HomeScreen> {
             StreamBuilder(
               stream: Stream.periodic(const Duration(seconds: 1)),
               builder: (context, snapshot) {
+                // Force rebuild by accessing the provider
+                final currentTask = context.watch<TaskProvider>().activeTask;
+                if (currentTask == null) {
+                  return const Text('No active task');
+                }
                 return Text(
-                  task.formattedDuration,
+                  currentTask.formattedDuration,
                   style: const TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
@@ -288,7 +295,9 @@ class _HomeScreenState extends State<HomeScreen> {
             
             const SizedBox(height: 8),
             Text(
-              'Started: ${DateTimeHelper.formatDateTime(task.startTime)}',
+              isScheduledForFuture 
+                  ? 'Will start: ${DateTimeHelper.formatDateTime(task.startTime)}'
+                  : 'Started: ${DateTimeHelper.formatDateTime(task.startTime)}',
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 14,

@@ -1,6 +1,7 @@
 /// App Constants
 /// Contains all constant values used throughout the application
 /// including screenshot intervals, API endpoints, and app settings
+library;
 
 class AppConstants {
   // App Information
@@ -20,7 +21,7 @@ class AppConstants {
   
   // Database
   static const String databaseName = 'productivity_tracker.db';
-  static const int databaseVersion = 2;
+  static const int databaseVersion = 3;
   
   // Task Status
   static const String taskStatusActive = 'active';
