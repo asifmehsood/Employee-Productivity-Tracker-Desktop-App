@@ -1,5 +1,6 @@
 /// Home Screen
 /// Main dashboard showing active task, timer, and quick actions
+library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +12,7 @@ import 'task_list_screen.dart';
 import 'settings_screen.dart';
 import 'calendar_screen.dart';
 import 'profile_screen.dart';
+import 'sign_in_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Employee Productivity Tracker'),
+        title: const Text('Task Creation'),
       ),
       drawer: _buildDrawer(context),
       body: Consumer2<TaskProvider, AuthProvider>(
@@ -52,18 +54,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           );
-        },
-      ),
-      floatingActionButton: Consumer<TaskProvider>(
-        builder: (context, taskProvider, child) {
-          if (!taskProvider.hasActiveTask) {
-            return FloatingActionButton.extended(
-              onPressed: () => _showStartTaskDialog(context),
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Start Task'),
-            );
-          }
-          return const SizedBox.shrink();
         },
       ),
     );
@@ -147,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.home),
-                title: const Text('Dashboard'),
+                title: const Text('Task Creation'),
                 onTap: () => Navigator.pop(context),
               ),
               ListTile(
@@ -193,6 +183,41 @@ class _HomeScreenState extends State<HomeScreen> {
                     context,
                     MaterialPageRoute(builder: (_) => const SettingsScreen()),
                   );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Logout'),
+                onTap: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Logout'),
+                      content: const Text('Are you sure you want to logout?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                          child: const Text('Logout'),
+                        ),
+                      ],
+                    ),
+                  );
+                  
+                  if (confirmed == true && context.mounted) {
+                    await context.read<AuthProvider>().logout();
+                    if (context.mounted) {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SignInScreen()),
+                        (route) => false,
+                      );
+                    }
+                  }
                 },
               ),
             ],

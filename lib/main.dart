@@ -1,6 +1,7 @@
 /// Employee Productivity Tracker
 /// Main entry point of the application
 /// Initializes providers, database, window management, and system tray
+library;
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/task_provider.dart';
 import 'providers/screenshot_provider.dart';
 import 'providers/auth_provider.dart';
+import 'screens/sign_in_screen.dart';
 import 'screens/home_screen.dart';
 import 'core/constants/app_constants.dart';
 import 'core/constants/azure_config.dart';
@@ -128,7 +130,7 @@ class _AppInitializerState extends State<AppInitializer> with TrayListener {
       ),
     );
 
-    // Check if employee setup is required
+    // Check if employee setup is required (only if not logged in via sign in)
     if (!authProvider.isSetup()) {
       await _showEmployeeSetupDialog();
     }
@@ -250,7 +252,13 @@ class _AppInitializerState extends State<AppInitializer> with TrayListener {
       );
     }
 
-    return const HomeScreen();
+    // Check if user is logged in
+    final authProvider = context.watch<AuthProvider>();
+    if (authProvider.isLoggedIn) {
+      return const HomeScreen();
+    } else {
+      return const SignInScreen();
+    }
   }
 }
 
