@@ -13,6 +13,7 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -22,6 +23,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -110,6 +112,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
+                  
+                  // Name Field
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Full Name',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.person),
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your name';
+                      }
+                      if (value.length < 2) {
+                        return 'Name must be at least 2 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
                   
                   // Email Field
                   TextFormField(
