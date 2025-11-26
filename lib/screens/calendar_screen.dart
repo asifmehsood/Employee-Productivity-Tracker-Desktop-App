@@ -14,10 +14,36 @@ class CalendarScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0d0d0d),
       drawer: const AppDrawer(currentPage: DrawerPage.workCalendar),
       appBar: AppBar(
-        title: const Text('Work Calendar'),
-        elevation: 2,
+        backgroundColor: const Color(0xFF1a1a1a),
+        elevation: 0,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF3fd884), Color(0xFF2d7a47)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.calendar_month, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Work Calendar',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
       body: const CalendarView(),
     );
@@ -31,15 +57,32 @@ class CalendarView extends StatefulWidget {
   State<CalendarView> createState() => _CalendarViewState();
 }
 
-class _CalendarViewState extends State<CalendarView> {
+class _CalendarViewState extends State<CalendarView> with SingleTickerProviderStateMixin {
   DateTime _selectedMonth = DateTime.now();
+  int? _hoveredDay;
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
   
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         _buildMonthSelector(),
-        _buildLegend(),
+        _buildWeekdayHeaders(),
         Expanded(
           child: _buildCalendarGrid(),
         ),
@@ -47,53 +90,47 @@ class _CalendarViewState extends State<CalendarView> {
     );
   }
   
-  Widget _buildLegend() {
+  Widget _buildWeekdayHeaders() {
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildLegendItem(Colors.red.shade100, '< 4 hrs'),
-          const SizedBox(width: 12),
-          _buildLegendItem(Colors.amber.shade200, '4-8 hrs'),
-          const SizedBox(width: 12),
-          _buildLegendItem(Colors.green.shade200, '8+ hrs'),
-        ],
+        children: weekdays.map((day) {
+          return Expanded(
+            child: Center(
+              child: Text(
+                day,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.6),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
-    );
-  }
-  
-  Widget _buildLegendItem(Color color, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12),
-        ),
-      ],
     );
   }
   
   Widget _buildMonthSelector() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1a1a1a),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF3fd884).withOpacity(0.2),
+          width: 1,
+        ),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left),
+            icon: const Icon(Icons.chevron_left, color: Color(0xFF3fd884)),
             onPressed: () {
               setState(() {
                 _selectedMonth = DateTime(
@@ -102,13 +139,21 @@ class _CalendarViewState extends State<CalendarView> {
                 );
               });
             },
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFF3fd884).withOpacity(0.1),
+            ),
           ),
           Text(
             DateFormat('MMMM yyyy').format(_selectedMonth),
-            style: Theme.of(context).textTheme.titleLarge,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
           ),
           IconButton(
-            icon: const Icon(Icons.chevron_right),
+            icon: const Icon(Icons.chevron_right, color: Color(0xFF3fd884)),
             onPressed: () {
               setState(() {
                 _selectedMonth = DateTime(
@@ -117,6 +162,9 @@ class _CalendarViewState extends State<CalendarView> {
                 );
               });
             },
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFF3fd884).withOpacity(0.1),
+            ),
           ),
         ],
       ),
@@ -126,32 +174,32 @@ class _CalendarViewState extends State<CalendarView> {
   Widget _buildCalendarGrid() {
     final firstDayOfMonth = DateTime(_selectedMonth.year, _selectedMonth.month, 1);
     final lastDayOfMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0);
-    final firstWeekday = firstDayOfMonth.weekday;
+    final firstWeekday = firstDayOfMonth.weekday; // Monday = 1
     final daysInMonth = lastDayOfMonth.day;
     
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 7,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        childAspectRatio: 1,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.85,
       ),
-      itemCount: daysInMonth + firstWeekday,
+      itemCount: daysInMonth + firstWeekday - 1,
       itemBuilder: (context, index) {
-        if (index < firstWeekday) {
+        if (index < firstWeekday - 1) {
           return Container(); // Empty space before first day
         }
         
-        final day = index - firstWeekday + 1;
+        final day = index - firstWeekday + 2;
         final date = DateTime(_selectedMonth.year, _selectedMonth.month, day);
         
-        return _buildDayCell(date);
+        return _buildDayCell(date, day);
       },
     );
   }
   
-  Widget _buildDayCell(DateTime date) {
+  Widget _buildDayCell(DateTime date, int day) {
     final isToday = date.year == DateTime.now().year &&
         date.month == DateTime.now().month &&
         date.day == DateTime.now().day;
@@ -165,53 +213,121 @@ class _CalendarViewState extends State<CalendarView> {
             final hasWork = workMinutes > 0;
             final hoursWorked = workMinutes / 60.0;
             
-            // Calculate color based on hours worked
-            Color? cellColor;
-            if (isToday) {
-              cellColor = Colors.purple.shade100;
-            } else if (hasWork) {
-              if (hoursWorked >= 8) {
-                // 8+ hours = green (worked full day)
-                cellColor = Colors.green.shade200;
-              } else if (hoursWorked >= 4) {
-                // 4-8 hours = yellow/amber (partial day)
-                cellColor = Colors.amber.shade200;
-              } else {
-                // Less than 4 hours = light red (minimal work)
-                cellColor = Colors.red.shade100;
-              }
-            }
-            
-            return Card(
-              elevation: isToday ? 4 : 1,
-              color: cellColor,
-              child: InkWell(
-                onTap: hasWork
-                    ? () => _showDayDetails(context, date, snapshot.data!)
-                    : null,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${date.day}',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight:
-                                  isToday ? FontWeight.bold : FontWeight.normal,
-                              color: Colors.white,
+            return MouseRegion(
+              onEnter: (_) => setState(() => _hoveredDay = day),
+              onExit: (_) => setState(() => _hoveredDay = null),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: isToday
+                      ? const Color(0xFF1a1a1a)
+                      : const Color(0xFF0d0d0d),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _hoveredDay == day
+                        ? const Color(0xFF3fd884).withOpacity(0.6)
+                        : (isToday
+                            ? const Color(0xFF3fd884).withOpacity(0.5)
+                            : const Color(0xFF3fd884).withOpacity(0.15)),
+                    width: _hoveredDay == day ? 1.5 : 1,
+                  ),
+                  boxShadow: _hoveredDay == day
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF3fd884).withOpacity(0.1),
+                            blurRadius: 8,
+                            spreadRadius: 0,
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: hasWork
+                        ? () => _showDayDetails(context, date, snapshot.data!)
+                        : null,
+                    borderRadius: BorderRadius.circular(12),
+                    splashColor: const Color(0xFF3fd884).withOpacity(0.1),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Day number
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: isToday
+                                  ? const Color(0xFF3fd884).withOpacity(0.3)
+                                  : (hasWork
+                                      ? const Color(0xFF3fd884).withOpacity(0.15)
+                                      : Colors.transparent),
+                              shape: BoxShape.circle,
                             ),
-                      ),
-                      if (hasWork) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          _formatMinutes(workMinutes),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.white70,
+                            child: Center(
+                              child: Text(
+                                '${date.day}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: isToday ? FontWeight.bold : FontWeight.w600,
+                                  color: isToday
+                                      ? const Color(0xFF3fd884)
+                                      : (hasWork
+                                          ? const Color(0xFF3fd884)
+                                          : Colors.white.withOpacity(0.5)),
+                                ),
                               ),
-                        ),
-                      ],
-                    ],
+                            ),
+                          ),
+                          if (hasWork) ...[
+                            const SizedBox(height: 6),
+                            // Time worked badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF3fd884).withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: const Color(0xFF3fd884).withOpacity(0.3),
+                                  width: 0.5,
+                                ),
+                              ),
+                              child: Text(
+                                _formatMinutes(workMinutes),
+                                style: const TextStyle(
+                                  color: Color(0xFF3fd884),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            // Tasks count
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.task_alt,
+                                  size: 12,
+                                  color: Colors.white.withOpacity(0.5),
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '${snapshot.data?['completed'] ?? 0}',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.5),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -234,37 +350,153 @@ class _CalendarViewState extends State<CalendarView> {
   void _showDayDetails(BuildContext context, DateTime date, Map<String, dynamic> data) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(DateFormat('MMMM d, yyyy').format(date)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildDetailRow('Total Time', _formatMinutes(data['totalMinutes'])),
-            _buildDetailRow('Tasks Completed', '${data['completed']}'),
-            _buildDetailRow('Tasks Active', '${data['active']}'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+      builder: (context) => Dialog(
+        backgroundColor: const Color(0xFF1a1a1a),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: const Color(0xFF3fd884).withOpacity(0.3),
+            width: 1,
           ),
-        ],
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with gradient icon
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF3fd884), Color(0xFF2d7a47)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.calendar_today, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      DateFormat('MMMM d, yyyy').format(date),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Stats cards
+              _buildStatCard(
+                Icons.schedule,
+                'Total Time',
+                _formatMinutes(data['totalMinutes']),
+                const Color(0xFF3fd884),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      Icons.check_circle,
+                      'Completed',
+                      '${data['completed']}',
+                      const Color(0xFF2d7a47),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildStatCard(
+                      Icons.play_circle,
+                      'Active',
+                      '${data['active']}',
+                      const Color(0xFF6dd4a8),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Close button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2d7a47),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Close',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
   
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+  Widget _buildStatCard(IconData icon, String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
