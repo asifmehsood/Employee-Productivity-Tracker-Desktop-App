@@ -804,9 +804,10 @@ class _AnimatedSubmitButtonState extends State<_AnimatedSubmitButton> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       cursor: widget.isSubmitting ? SystemMouseCursors.wait : SystemMouseCursors.click,
-      child: AnimatedContainer(
+      child: AnimatedScale(
+        scale: _isHovered && !widget.isSubmitting ? 1.01 : 1.0,
         duration: const Duration(milliseconds: 200),
-        transform: Matrix4.identity()..scale(_isHovered && !widget.isSubmitting ? 1.02 : 1.0),
+        curve: Curves.easeInOut,
         child: Container(
           height: 60,
           decoration: BoxDecoration(
