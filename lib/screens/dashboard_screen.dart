@@ -75,26 +75,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 24),
 
                     // Top Row: Work Hours, Percent Target, Focus Percent, Daily Summary
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Stack(
+                      clipBehavior: Clip.none,
                       children: [
-                        // Left Column (Work Hours & Timeline)
-                        Expanded(
-                          flex: 2,
-                          child: Column(
-                            children: [
-                              _buildWorkHoursCard(taskProvider),
-                              const SizedBox(height: 24),
-                              _buildTimelineCard(taskProvider),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        
-                        // Right Column (Daily Summary)
-                        Expanded(
-                          flex: 1,
-                          child: _buildDailySummaryCard(taskProvider),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Left Column (Work Hours & Timeline)
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                children: [
+                                  _buildWorkHoursCard(taskProvider),
+                                  const SizedBox(height: 24),
+                                  _buildTimelineCard(taskProvider),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 24),
+                            
+                            // Right Column (Daily Summary & Quick Insights)
+                            Expanded(
+                              flex: 1,
+                              child: Column(
+                                children: [
+                                  _buildDailySummaryCard(taskProvider),
+                                  const SizedBox(height: 24),
+                                  _buildQuickInsightsCard(taskProvider),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -348,12 +359,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Work Hours',
-              style: TextStyle(
-                color: Color(0xFFb0b0b0),
-                fontSize: 14,
-              ),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF1c4d2c), Color(0xFF2d7a47)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.access_time,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Text(
+                  'Work Hours',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             Row(
@@ -398,60 +429,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 
                 // Percent of Target
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1c4d2c), Color(0xFF2d7a47)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'Percent of Target',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              '%',
-                              style: TextStyle(
-                                color: Color(0xFF1c4d2c),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
+                _HoverGlowBox(
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1c4d2c), Color(0xFF2d7a47)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      const SizedBox(height: 12),
-                      RichText(
-                        text: TextSpan(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            TextSpan(
-                              text: '$percentOfTarget%',
-                              style: const TextStyle(
-                                fontSize: 48,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                            const Text(
+                              'Percent of Target',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
                               ),
                             ),
-                            TextSpan(
-                              text: ' of ${targetHours.toInt()}hr',
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Text(
+                                '%',
+                                style: TextStyle(
+                                  color: Color(0xFF1c4d2c),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: '$percentOfTarget%',
+                                style: const TextStyle(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              TextSpan(
+                                text: ' of ${targetHours.toInt()}hr',
                               style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.white70,
@@ -461,6 +493,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                     ],
+                  ),
                   ),
                 ),
               ],
@@ -477,27 +510,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Card(
         elevation: 8,
         shadowColor: const Color(0xFF1c4d2c).withOpacity(0.3),
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Timeline',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
+        child: SizedBox(
+          height: 370,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF1c4d2c), Color(0xFF2d7a47)],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.timeline,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        const Text(
+                          'Timeline',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Expanded(
+                      child: _buildTimelineGraph(taskProvider),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 200,
-              child: _buildTimelineGraph(taskProvider),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -524,22 +583,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
         elevation: 8,
         shadowColor: const Color(0xFF1c4d2c).withOpacity(0.3),
         child: SizedBox(
-          height: 284, // Match timeline card height (200 + 24 + 24 + 36 for title)
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Summary',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+          height: 290,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF1c4d2c), Color(0xFF2d7a47)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.pie_chart,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Text(
+                      'Summary',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 24),
-              
+                const SizedBox(height: 24),
+                
               // Interactive Donut Chart
               Expanded(
                 child: InteractiveDonutChart(
@@ -552,6 +630,180 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
       ),
+    );
+  }  Widget _buildQuickInsightsCard(TaskProvider taskProvider) {
+    final filteredTasks = _getFilteredTasks(taskProvider);
+    final totalTasks = filteredTasks.length;
+    final completedTasks = filteredTasks.where((t) => t.status == 'completed').length;
+    final activeTasks = taskProvider.runningTasks.length;
+    
+    // Calculate average task duration
+    final completedTasksList = filteredTasks.where((t) => t.status == 'completed');
+    double totalDuration = 0;
+    for (var task in completedTasksList) {
+      totalDuration += task.duration.inMinutes;
+    }
+    final avgDuration = completedTasksList.isNotEmpty 
+        ? (totalDuration / completedTasksList.length).toInt()
+        : 0;
+    
+    // Calculate productivity score
+    final productivityScore = totalTasks > 0 
+        ? ((completedTasks / totalTasks) * 100).toInt() 
+        : 0;
+
+    return _AnimatedHoverCard(
+      child: Card(
+        elevation: 8,
+        shadowColor: const Color(0xFF1c4d2c).withOpacity(0.3),
+        child: SizedBox(
+          height: 370,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF1c4d2c), Color(0xFF2d7a47)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.insights, color: Colors.white, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Quick Insights',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              
+              // Productivity Score with circular progress
+              Center(
+                child: Column(
+                  children: [
+                    _HoverGlowBox(
+                      glowColor: productivityScore >= 80
+                          ? const Color(0xFF3fd884)
+                          : productivityScore >= 50
+                              ? const Color(0xFFf39c12)
+                              : const Color(0xFFe74c3c),
+                      child: SizedBox(
+                        width: 100,
+                        height: 100,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            CircularProgressIndicator(
+                              value: productivityScore / 100,
+                              strokeWidth: 8,
+                              backgroundColor: const Color(0xFF2a2a2a),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                productivityScore >= 80
+                                    ? const Color(0xFF1c4d2c)
+                                    : productivityScore >= 50
+                                        ? const Color(0xFFf39c12)
+                                        : const Color(0xFFe74c3c),
+                              ),
+                            ),
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '$productivityScore%',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Score',
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ),
+              ),              // Stats Grid
+              _buildInsightRow(
+                Icons.task_alt,
+                'Active Tasks',
+                activeTasks.toString(),
+                const Color(0xFF1c4d2c),
+              ),
+              const SizedBox(height: 10),
+              _buildInsightRow(
+                Icons.check_circle_outline,
+                'Completed',
+                completedTasks.toString(),
+                const Color(0xFF2d7a47),
+              ),
+              const SizedBox(height: 10),
+              _buildInsightRow(
+                Icons.schedule,
+                'Avg Duration',
+                '${avgDuration}min',
+                const Color(0xFF3a9254),
+              ),
+            ],
+          ),
+        ),
+      ),
+      ),
+    );
+  }
+
+  Widget _buildInsightRow(IconData icon, String label, String value, Color color) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 18),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey[400],
+              fontSize: 14,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 
@@ -737,9 +989,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         const SizedBox(width: 12),
-        SizedBox(
+        Container(
           width: 40,
           height: 40,
+          padding: const EdgeInsets.all(2),
           child: CircularProgressIndicator(
             value: percent / 100,
             strokeWidth: 4,
@@ -899,6 +1152,78 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
+// Hover Glow Box Widget for small interactive elements
+class _HoverGlowBox extends StatefulWidget {
+  final Widget child;
+  final Color glowColor;
+
+  const _HoverGlowBox({
+    required this.child,
+    this.glowColor = const Color(0xFF3fd884),
+  });
+
+  @override
+  State<_HoverGlowBox> createState() => _HoverGlowBoxState();
+}
+
+class _HoverGlowBoxState extends State<_HoverGlowBox> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _glowAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+    
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => _controller.forward(),
+      onExit: (_) => _controller.reverse(),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.glowColor.withOpacity(0.15 * _glowAnimation.value),
+                    blurRadius: 20 * _glowAnimation.value,
+                    spreadRadius: 3 * _glowAnimation.value,
+                  ),
+                ],
+              ),
+              child: widget.child,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 // Animated Hover Card Widget for Dashboard Cards
 class _AnimatedHoverCard extends StatefulWidget {
   final Widget child;
@@ -996,11 +1321,11 @@ class _InteractiveDonutChartState extends State<InteractiveDonutChart> with Sing
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
     );
   }
 
@@ -1090,28 +1415,163 @@ class InteractiveTimelineChart extends StatefulWidget {
 }
 
 class _InteractiveTimelineChartState extends State<InteractiveTimelineChart> with SingleTickerProviderStateMixin {
-  Offset? _hoverPosition;
   String? _tooltipText;
   int? _hoveredTaskIndex;
   late AnimationController _animationController;
   late Animation<double> _glowAnimation;
+  OverlayEntry? _overlayEntry;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
     );
   }
 
   @override
   void dispose() {
+    _removeOverlay();
     _animationController.dispose();
     super.dispose();
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  void _showOverlay(BuildContext context, Offset position, String text) {
+    _removeOverlay();
+    
+    final overlay = Overlay.of(context);
+    final renderBox = context.findRenderObject() as RenderBox;
+    final offset = renderBox.localToGlobal(position);
+    
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        left: offset.dx + 15,
+        top: offset.dy - 70,
+        child: AnimatedBuilder(
+          animation: _glowAnimation,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: 0.8 + (0.2 * _glowAnimation.value),
+              child: Opacity(
+                opacity: _glowAnimation.value,
+                child: Material(
+                  elevation: 1000,
+                  color: Colors.transparent,
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 150, maxWidth: 200),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1c4d2c), Color(0xFF2d7a47)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF3fd884), width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF3fd884).withOpacity(0.3),
+                          blurRadius: 15,
+                          spreadRadius: 2,
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Icon(
+                                Icons.access_time,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Expanded(
+                              child: Text(
+                                'Productivity',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          text.split('\n')[0],
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.schedule,
+                                color: Color(0xFF3fd884),
+                                size: 14,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                text.split('\n').length > 1 ? text.split('\n')[1] : '',
+                                style: const TextStyle(
+                                  color: Color(0xFF3fd884),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    
+    overlay.insert(_overlayEntry!);
   }
 
   @override
@@ -1125,8 +1585,10 @@ class _InteractiveTimelineChartState extends State<InteractiveTimelineChart> wit
             
             // Check if hovering over a task bar
             final hourWidth = constraints.maxWidth / 24;
+            bool foundTask = false;
             
-            for (var task in widget.tasks) {
+            for (var i = 0; i < widget.tasks.length; i++) {
+              final task = widget.tasks[i];
               if (task.scheduledStartTime == null) continue;
               
               final startHour = task.scheduledStartTime!.hour + task.scheduledStartTime!.minute / 60;
@@ -1138,73 +1600,50 @@ class _InteractiveTimelineChartState extends State<InteractiveTimelineChart> wit
               
               if (localPosition.dx >= x1 && localPosition.dx <= x2 && 
                   localPosition.dy >= 10 && localPosition.dy <= constraints.maxHeight - 20) {
-                setState(() {
-                  _hoverPosition = localPosition;
-                  final hours = duration.floor();
-                  final minutes = ((duration - hours) * 60).round();
-                  _tooltipText = '${task.taskName}\\n${hours}h ${minutes}m';
-                });
+                if (_hoveredTaskIndex != i) {
+                  setState(() {
+                    _hoveredTaskIndex = i;
+                    final hours = duration.floor();
+                    final minutes = ((duration - hours) * 60).round();
+                    _tooltipText = '${task.taskName}\n${hours}h ${minutes}m';
+                  });
+                  _animationController.forward();
+                  _showOverlay(context, localPosition, _tooltipText!);
+                }
+                foundTask = true;
                 return;
               }
             }
             
-            setState(() {
-              _hoverPosition = null;
-              _tooltipText = null;
-            });
+            if (!foundTask && _hoveredTaskIndex != null) {
+              setState(() {
+                _tooltipText = null;
+                _hoveredTaskIndex = null;
+              });
+              _animationController.reverse();
+              _removeOverlay();
+            }
           },
           onExit: (_) {
             setState(() {
-              _hoverPosition = null;
               _tooltipText = null;
               _hoveredTaskIndex = null;
             });
             _animationController.reverse();
+            _removeOverlay();
           },
-          child: Stack(
-            children: [
-              AnimatedBuilder(
-                animation: _glowAnimation,
-                builder: (context, child) {
-                  return CustomPaint(
-                    size: Size(constraints.maxWidth, constraints.maxHeight),
-                    painter: TimelinePainter(
-                      tasks: widget.tasks,
-                      hoveredTaskIndex: _hoveredTaskIndex,
-                      glowValue: _glowAnimation.value,
-                    ),
-                  );
-                },
-              ),
-              if (_hoverPosition != null && _tooltipText != null)
-                Positioned(
-                  left: _hoverPosition!.dx + 10,
-                  top: _hoverPosition!.dy - 30,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2a2a2a),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF1c4d2c), width: 1),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      _tooltipText!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+          child: AnimatedBuilder(
+            animation: _glowAnimation,
+            builder: (context, child) {
+              return CustomPaint(
+                size: Size(constraints.maxWidth, constraints.maxHeight),
+                painter: TimelinePainter(
+                  tasks: widget.tasks,
+                  hoveredTaskIndex: _hoveredTaskIndex,
+                  glowValue: _glowAnimation.value,
                 ),
-            ],
+              );
+            },
           ),
         );
       },
@@ -1258,32 +1697,69 @@ class TimelinePainter extends CustomPainter {
     }
     
     // Draw task blocks
-    for (var task in tasks) {
-      final startHour = task.startTime.hour + task.startTime.minute / 60;
-      final endHour = task.endTime != null 
-          ? task.endTime!.hour + task.endTime!.minute / 60
-          : startHour + task.duration.inMinutes / 60;
+    for (var i = 0; i < tasks.length; i++) {
+      final task = tasks[i];
+      if (task.scheduledStartTime == null) continue;
+      
+      final isHovered = hoveredTaskIndex == i;
+      
+      final startHour = task.scheduledStartTime!.hour + task.scheduledStartTime!.minute / 60;
+      final duration = task.duration.inMinutes / 60;
+      final endHour = math.min(24, startHour + duration);
       
       final x1 = startHour * hourWidth;
       final x2 = endHour * hourWidth;
       final blockHeight = size.height - 30;
       
-      // Gradient colors
+      final rect = Rect.fromLTWH(x1, 10, x2 - x1, blockHeight);
+      
+      // Draw glow effect when hovering
+      if (isHovered && glowValue > 0) {
+        final glowPaint = Paint()
+          ..style = PaintingStyle.fill
+          ..color = const Color(0xFF3fd884).withOpacity(0.25 * glowValue)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+        
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            rect.inflate(3 * glowValue),
+            const Radius.circular(6),
+          ),
+          glowPaint,
+        );
+      }
+      
+      // Gradient colors - slightly brighter when hovered
       final gradient = LinearGradient(
-        colors: [
-          const Color(0xFF1c4d2c),
-          const Color(0xFF2d7a47),
-          const Color(0xFF3fd884),
-        ],
+        colors: isHovered && glowValue > 0
+          ? [
+              const Color(0xFF1f5a35),
+              const Color(0xFF2d7a47),
+              const Color(0xFF47aa61),
+            ]
+          : [
+              const Color(0xFF1c4d2c),
+              const Color(0xFF2d7a47),
+              const Color(0xFF3fd884),
+            ],
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
       );
       
-      final rect = Rect.fromLTWH(x1, 10, x2 - x1, blockHeight);
       paint.shader = gradient.createShader(rect);
       
+      // Scale effect when hovering
+      final drawRect = isHovered && glowValue > 0
+          ? Rect.fromLTWH(
+              x1 - (1.5 * glowValue),
+              10 - (1 * glowValue),
+              (x2 - x1) + (3 * glowValue),
+              blockHeight + (2 * glowValue),
+            )
+          : rect;
+      
       canvas.drawRRect(
-        RRect.fromRectAndRadius(rect, const Radius.circular(4)),
+        RRect.fromRectAndRadius(drawRect, const Radius.circular(4)),
         paint,
       );
     }
@@ -1310,8 +1786,8 @@ class InteractiveDonutChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final baseRadius = math.min(size.width, size.height) / 2 - 40;
-    final innerRadius = baseRadius * 0.65;
+    final baseRadius = math.min(size.width, size.height) / 2 - 20;
+    final innerRadius = baseRadius * 0.6;
     
     final total = productiveMinutes + unproductiveMinutes;
     if (total == 0) {
@@ -1334,15 +1810,36 @@ class InteractiveDonutChartPainter extends CustomPainter {
     
     // Draw Productive segment (green)
     final productiveAngle = (productiveMinutes / total) * 2 * math.pi;
-    final productiveRadius = hoveredSegment == 'Productive' ? baseRadius + 8 : baseRadius;
-    final productiveStroke = hoveredSegment == 'Productive' ? (baseRadius - innerRadius) + 6 : (baseRadius - innerRadius);
+    final hoverScale = hoveredSegment == 'Productive' ? animationValue : 1.0;
+    final productiveRadius = baseRadius + (6 * (hoverScale - 1.0));
+    final productiveStroke = (baseRadius - innerRadius) + (4 * (hoverScale - 1.0));
+    
+    // Draw glow effect when hovering
+    if (hoveredSegment == 'Productive') {
+      final glowPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = productiveStroke + 8
+        ..strokeCap = StrokeCap.round
+        ..color = const Color(0xFF3fd884).withOpacity(0.2 * (hoverScale - 1.0) * 12.5)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+      
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: (productiveRadius + innerRadius) / 2),
+        startAngle,
+        productiveAngle,
+        false,
+        glowPaint,
+      );
+    }
     
     final productivePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = productiveStroke
       ..strokeCap = StrokeCap.round
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF1c4d2c), Color(0xFF2d7a47), Color(0xFF3fd884)],
+      ..shader = LinearGradient(
+        colors: hoveredSegment == 'Productive'
+          ? [const Color(0xFF1f5a35), const Color(0xFF2d7a47), const Color(0xFF47aa61)]
+          : [const Color(0xFF1c4d2c), const Color(0xFF2d7a47), const Color(0xFF3fd884)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ).createShader(Rect.fromCircle(center: center, radius: productiveRadius));
@@ -1359,15 +1856,36 @@ class InteractiveDonutChartPainter extends CustomPainter {
     
     // Draw Unproductive segment (red/orange)
     final unproductiveAngle = (unproductiveMinutes / total) * 2 * math.pi;
-    final unproductiveRadius = hoveredSegment == 'Unproductive' ? baseRadius + 8 : baseRadius;
-    final unproductiveStroke = hoveredSegment == 'Unproductive' ? (baseRadius - innerRadius) + 6 : (baseRadius - innerRadius);
+    final hoverScaleUnprod = hoveredSegment == 'Unproductive' ? animationValue : 1.0;
+    final unproductiveRadius = baseRadius + (6 * (hoverScaleUnprod - 1.0));
+    final unproductiveStroke = (baseRadius - innerRadius) + (4 * (hoverScaleUnprod - 1.0));
+    
+    // Draw glow effect when hovering
+    if (hoveredSegment == 'Unproductive') {
+      final glowPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = unproductiveStroke + 8
+        ..strokeCap = StrokeCap.round
+        ..color = const Color(0xFFf39c12).withOpacity(0.2 * (hoverScaleUnprod - 1.0) * 12.5)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+      
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: (unproductiveRadius + innerRadius) / 2),
+        startAngle,
+        unproductiveAngle,
+        false,
+        glowPaint,
+      );
+    }
     
     final unproductivePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = unproductiveStroke
       ..strokeCap = StrokeCap.round
-      ..shader = const LinearGradient(
-        colors: [Color(0xFFe74c3c), Color(0xFFf39c12)],
+      ..shader = LinearGradient(
+        colors: hoveredSegment == 'Unproductive'
+          ? [const Color(0xFFe74c3c), const Color(0xFFff8a42)]
+          : [const Color(0xFFe74c3c), const Color(0xFFf39c12)],
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ).createShader(Rect.fromCircle(center: center, radius: unproductiveRadius));
@@ -1378,6 +1896,80 @@ class InteractiveDonutChartPainter extends CustomPainter {
       unproductiveAngle,
       false,
       unproductivePaint,
+    );
+    
+    // Draw percentage text only when hovering
+    if (hoveredSegment == 'Productive') {
+      // Draw percentage text for productive
+      final productivePercent = ((productiveMinutes / total) * 100).toInt();
+      final productiveTextAngle = -math.pi / 2 + (productiveAngle / 2);
+      final productiveTextRadius = (baseRadius + innerRadius) / 2;
+      final productiveTextPosition = Offset(
+        center.dx + productiveTextRadius * math.cos(productiveTextAngle),
+        center.dy + productiveTextRadius * math.sin(productiveTextAngle),
+      );
+      
+      _drawText(
+        canvas,
+        '$productivePercent%',
+        productiveTextPosition,
+        const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(
+              color: Colors.black54,
+              blurRadius: 4,
+              offset: Offset(1, 1),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    if (hoveredSegment == 'Unproductive') {
+      // Draw percentage text for unproductive
+      final unproductivePercent = ((unproductiveMinutes / total) * 100).toInt();
+      final unproductiveTextAngle = -math.pi / 2 + productiveAngle + (unproductiveAngle / 2);
+      final unproductiveTextRadius = (baseRadius + innerRadius) / 2;
+      final unproductiveTextPosition = Offset(
+        center.dx + unproductiveTextRadius * math.cos(unproductiveTextAngle),
+        center.dy + unproductiveTextRadius * math.sin(unproductiveTextAngle),
+      );
+      
+      _drawText(
+        canvas,
+        '$unproductivePercent%',
+        unproductiveTextPosition,
+        const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(
+              color: Colors.black54,
+              blurRadius: 4,
+              offset: Offset(1, 1),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+  
+  void _drawText(Canvas canvas, String text, Offset position, TextStyle style) {
+    final textPainter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(
+        position.dx - textPainter.width / 2,
+        position.dy - textPainter.height / 2,
+      ),
     );
   }
 
