@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import '../models/task_model.dart';
 import '../core/utils/date_time_helper.dart';
-import '../core/constants/app_constants.dart';
 
 class TaskDetailScreen extends StatelessWidget {
   final TaskModel task;
@@ -387,9 +386,6 @@ class TaskDetailScreen extends StatelessWidget {
     TaskModel task,
     TaskProvider taskProvider,
   ) {
-    final now = DateTime.now();
-    final timeUntilStart = task.startTime.difference(now);
-    
     return Card(
       elevation: 4,
       color: const Color(0xFF1a1a1a),

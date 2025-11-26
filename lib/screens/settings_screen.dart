@@ -1,9 +1,11 @@
 /// Settings Screen
 /// Configure Azure, Odoo, and app settings
+library;
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_constants.dart';
+import 'common/app_drawer.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -78,11 +80,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
+        drawer: AppDrawer(currentPage: DrawerPage.settings),
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
+      drawer: const AppDrawer(currentPage: DrawerPage.settings),
       appBar: AppBar(
         title: const Text('Settings'),
         actions: [

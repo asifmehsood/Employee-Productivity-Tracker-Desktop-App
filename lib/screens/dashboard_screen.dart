@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import '../core/utils/date_time_helper.dart';
 import 'dart:math' as math;
+import 'common/app_drawer.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -21,6 +22,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(currentPage: DrawerPage.dashboard),
       appBar: AppBar(
         title: const Text('Dashboard', style: TextStyle(fontWeight: FontWeight.w600)),
         flexibleSpace: Container(

@@ -8,6 +8,7 @@ import '../providers/task_provider.dart';
 import '../models/task_model.dart';
 import '../core/utils/date_time_helper.dart';
 import 'task_detail_screen.dart';
+import 'common/app_drawer.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -22,6 +23,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(currentPage: DrawerPage.allTasks),
       appBar: AppBar(
         title: const Text('All Tasks'),
         actions: [

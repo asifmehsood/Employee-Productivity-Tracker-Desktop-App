@@ -6,16 +6,22 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import 'package:intl/intl.dart';
+import 'common/app_drawer.dart';
 
-class CalendarScreen extends Scaffold {
-  CalendarScreen({super.key})
-      : super(
-          appBar: AppBar(
-            title: const Text('Work Calendar'),
-            elevation: 2,
-          ),
-          body: const CalendarView(),
-        );
+class CalendarScreen extends StatelessWidget {
+  const CalendarScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      drawer: const AppDrawer(currentPage: DrawerPage.workCalendar),
+      appBar: AppBar(
+        title: const Text('Work Calendar'),
+        elevation: 2,
+      ),
+      body: const CalendarView(),
+    );
+  }
 }
 
 class CalendarView extends StatefulWidget {
