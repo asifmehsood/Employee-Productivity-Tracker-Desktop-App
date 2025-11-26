@@ -187,22 +187,26 @@ class _HomeScreenState extends State<HomeScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
+                  color: const Color(0xFF2d7a47).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFF3fd884).withOpacity(0.3),
+                    width: 1,
+                  ),
                 ),
                 child: Column(
                   children: [
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.camera_alt, size: 16, color: Colors.blue),
+                        Icon(Icons.camera_alt, size: 16, color: Color(0xFF3fd884)),
                         SizedBox(width: 8),
                         Text(
                           'Screenshot Capture Active',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: Colors.blue,
+                            color: Color(0xFF3fd884),
                           ),
                         ),
                       ],
@@ -210,9 +214,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Interval: ${timerService.intervalMinutes} minutes',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[700],
+                        color: Colors.white70,
                       ),
                     ),
                   ],

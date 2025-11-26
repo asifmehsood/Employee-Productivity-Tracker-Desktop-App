@@ -194,23 +194,24 @@ class TaskDetailScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1c4d2c).withOpacity(0.2),
+                color: const Color(0xFF2d7a47).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFF1c4d2c).withOpacity(0.3),
+                  color: const Color(0xFF3fd884).withOpacity(0.3),
+                  width: 1,
                 ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.camera_alt, color: Colors.green[400]),
+                  const Icon(Icons.camera_alt, color: Color(0xFF3fd884), size: 20),
                   const SizedBox(width: 12),
-                  Text(
+                  const Text(
                     'Screenshot Capture Active',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.green[400],
-                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF3fd884),
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -434,19 +435,22 @@ class TaskDetailScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: const Color(0xFF2d7a47).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                border: Border.all(
+                  color: const Color(0xFF3fd884).withOpacity(0.3),
+                  width: 1,
+                ),
               ),
               child: Column(
                 children: [
-                  Icon(Icons.schedule, size: 48, color: Colors.blue[300]),
+                  const Icon(Icons.schedule, size: 48, color: Color(0xFF3fd884)),
                   const SizedBox(height: 16),
-                  Text(
+                  const Text(
                     'Starts in',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[400],
+                      color: Colors.white70,
                     ),
                   ),
                   const SizedBox(height: 8),

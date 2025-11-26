@@ -17,50 +17,239 @@ class TaskListScreen extends StatefulWidget {
   State<TaskListScreen> createState() => _TaskListScreenState();
 }
 
-class _TaskListScreenState extends State<TaskListScreen> {
+class _TaskListScreenState extends State<TaskListScreen> with SingleTickerProviderStateMixin {
   String _filter = 'all';
+  int? _hoveredIndex;
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0d0d0d),
       drawer: const AppDrawer(currentPage: DrawerPage.allTasks),
       appBar: AppBar(
-        title: const Text('All Tasks'),
+        backgroundColor: const Color(0xFF1a1a1a),
+        elevation: 0,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF3fd884), Color(0xFF2d7a47)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.task_alt, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'All Tasks',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
         actions: [
-          PopupMenuButton<String>(
-            onSelected: (value) => setState(() => _filter = value),
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'all', child: Text('All Tasks')),
-              const PopupMenuItem(value: 'active', child: Text('Active')),
-              const PopupMenuItem(value: 'paused', child: Text('Paused')),
-              const PopupMenuItem(value: 'completed', child: Text('Completed')),
-            ],
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1a1a1a),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF3fd884).withOpacity(0.3), width: 1),
+            ),
+            child: PopupMenuButton<String>(
+              onSelected: (value) => setState(() => _filter = value),
+              color: const Color(0xFF1a1a1a),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: const Color(0xFF3fd884).withOpacity(0.3), width: 1),
+              ),
+              icon: Row(
+                children: [
+                  Icon(
+                    _getFilterIcon(_filter),
+                    color: const Color(0xFF3fd884),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _getFilterLabel(_filter),
+                    style: const TextStyle(
+                      color: Color(0xFF3fd884),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.arrow_drop_down,
+                    color: Color(0xFF3fd884),
+                  ),
+                ],
+              ),
+              itemBuilder: (context) => [
+                _buildMenuItem('all', 'All Tasks', Icons.list),
+                _buildMenuItem('active', 'Active', Icons.play_circle),
+                _buildMenuItem('paused', 'Paused', Icons.pause_circle),
+                _buildMenuItem('completed', 'Completed', Icons.check_circle),
+              ],
+            ),
           ),
         ],
       ),
       body: Consumer<TaskProvider>(
         builder: (context, taskProvider, child) {
           if (taskProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF3fd884),
+              ),
+            );
           }
 
           final tasks = _getFilteredTasks(taskProvider);
 
           if (tasks.isEmpty) {
-            return const Center(
-              child: Text('No tasks found'),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF3fd884).withOpacity(0.1),
+                          const Color(0xFF2d7a47).withOpacity(0.05),
+                        ],
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _getFilterIcon(_filter),
+                      size: 64,
+                      color: const Color(0xFF3fd884).withOpacity(0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'No ${_getFilterLabel(_filter).toLowerCase()} found',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Start by creating a new task',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.4),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
             );
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.all(16),
             itemCount: tasks.length,
             itemBuilder: (context, index) {
-              return _buildTaskCard(tasks[index], taskProvider);
+              return _buildTaskCard(tasks[index], taskProvider, index);
             },
           );
         },
       ),
     );
+  }
+
+  PopupMenuItem<String> _buildMenuItem(String value, String label, IconData icon) {
+    final isSelected = _filter == value;
+    return PopupMenuItem(
+      value: value,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF3fd884).withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? const Color(0xFF3fd884) : Colors.white70,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? const Color(0xFF3fd884) : Colors.white70,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+            if (isSelected) ...[
+              const Spacer(),
+              const Icon(
+                Icons.check,
+                color: Color(0xFF3fd884),
+                size: 18,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getFilterIcon(String filter) {
+    switch (filter) {
+      case 'active':
+        return Icons.play_circle;
+      case 'paused':
+        return Icons.pause_circle;
+      case 'completed':
+        return Icons.check_circle;
+      default:
+        return Icons.list;
+    }
+  }
+
+  String _getFilterLabel(String filter) {
+    switch (filter) {
+      case 'active':
+        return 'Active';
+      case 'paused':
+        return 'Paused';
+      case 'completed':
+        return 'Completed';
+      default:
+        return 'All Tasks';
+    }
   }
 
   List<TaskModel> _getFilteredTasks(TaskProvider provider) {
@@ -76,69 +265,218 @@ class _TaskListScreenState extends State<TaskListScreen> {
     }
   }
 
-  Widget _buildTaskCard(TaskModel task, TaskProvider provider) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => TaskDetailScreen(task: task),
-            ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            children: [
-              Icon(
-                _getStatusIcon(task.status),
-                color: _getStatusColor(task.status),
-                size: 32,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      task.taskName,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    if (task.taskDescription.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        task.taskDescription,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 4),
-                    Text(
-                      'Duration: ${task.formattedDuration}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                    Text(
-                      DateTimeHelper.formatDateTime(task.startTime),
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
+  Widget _buildTaskCard(TaskModel task, TaskProvider provider, int index) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredIndex = index),
+      onExit: (_) => setState(() => _hoveredIndex = null),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: _hoveredIndex == index
+                ? [
+                    const Color(0xFF1a1a1a),
+                    const Color(0xFF0d0d0d),
+                  ]
+                : [
+                    const Color(0xFF0d0d0d),
+                    const Color(0xFF0d0d0d),
                   ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _hoveredIndex == index
+                ? const Color(0xFF3fd884).withOpacity(0.5)
+                : const Color(0xFF3fd884).withOpacity(0.2),
+            width: 1.5,
+          ),
+          boxShadow: _hoveredIndex == index
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF3fd884).withOpacity(0.15),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                  ),
+                ]
+              : [],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TaskDetailScreen(task: task),
                 ),
+              );
+            },
+            borderRadius: BorderRadius.circular(16),
+            splashColor: const Color(0xFF3fd884).withOpacity(0.1),
+            highlightColor: const Color(0xFF3fd884).withOpacity(0.05),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Row(
+                children: [
+                  // Status Icon with Glow Effect
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          _getStatusColor(task.status).withOpacity(0.3),
+                          _getStatusColor(task.status).withOpacity(0.1),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _getStatusColor(task.status).withOpacity(0.5),
+                        width: 2,
+                      ),
+                      boxShadow: _hoveredIndex == index
+                          ? [
+                              BoxShadow(
+                                color: _getStatusColor(task.status).withOpacity(0.3),
+                                blurRadius: 12,
+                                spreadRadius: 1,
+                              ),
+                            ]
+                          : [],
+                    ),
+                    child: Icon(
+                      _getStatusIcon(task.status),
+                      color: _getStatusColor(task.status),
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Task Name
+                        Text(
+                          task.taskName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        if (task.taskDescription.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            task.taskDescription,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.6),
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        // Duration and Time Row
+                        Row(
+                          children: [
+                            // Duration Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF3fd884).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFF3fd884).withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.schedule,
+                                    color: Color(0xFF3fd884),
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    task.formattedDuration,
+                                    style: const TextStyle(
+                                      color: Color(0xFF3fd884),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Date Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.1),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today,
+                                    color: Colors.white.withOpacity(0.7),
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    DateTimeHelper.formatDateTime(task.startTime),
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Arrow Icon
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: _hoveredIndex == index
+                          ? const Color(0xFF3fd884).withOpacity(0.2)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_ios,
+                      color: _hoveredIndex == index
+                          ? const Color(0xFF3fd884)
+                          : Colors.white.withOpacity(0.4),
+                      size: 20,
+                    ),
+                  ),
+                ],
               ),
-              Icon(
-                Icons.chevron_right,
-                color: Colors.grey[600],
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -161,11 +499,11 @@ class _TaskListScreenState extends State<TaskListScreen> {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'active':
-        return Colors.green;
+        return const Color(0xFF3fd884);
       case 'paused':
-        return Colors.orange;
+        return const Color(0xFF6dd4a8);
       case 'completed':
-        return Colors.blue;
+        return const Color(0xFF2d7a47);
       default:
         return Colors.grey;
     }
