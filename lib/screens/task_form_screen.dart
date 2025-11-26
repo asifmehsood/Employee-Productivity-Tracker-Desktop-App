@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/auth_provider.dart';
-import 'task_list_screen.dart';
 
 class TaskFormScreen extends StatefulWidget {
   const TaskFormScreen({super.key});
@@ -529,13 +528,22 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
 
     if (task != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Task created successfully!')),
+        const SnackBar(
+          content: Text('Task created successfully!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 1),
+        ),
       );
-      // Navigate to task list screen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const TaskListScreen()),
-      );
+      
+      // Navigate to fresh task creation page
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const TaskFormScreen()),
+        );
+      }
+      
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to create task')),
@@ -584,12 +592,32 @@ class _AnimatedTextFieldWrapperState extends State<_AnimatedTextFieldWrapper> {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
+      child: AnimatedScale(
+        scale: _isHovered || isFocused ? 1.01 : 1.0,
         duration: const Duration(milliseconds: 200),
-        transform: Matrix4.identity()..scale(_isHovered || isFocused ? 1.01 : 1.0),
-        child: Container(
+        curve: Curves.easeInOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF1a1a1a),
+                _isHovered || isFocused
+                    ? const Color(0xFF1c4d2c).withOpacity(0.15)
+                    : const Color(0xFF1a1a1a),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isFocused
+                  ? const Color(0xFF3fd884)
+                  : _isHovered
+                      ? const Color(0xFF1c4d2c).withOpacity(0.5)
+                      : Colors.grey.withOpacity(0.2),
+              width: isFocused ? 2 : 1,
+            ),
             boxShadow: [
               if (isFocused)
                 BoxShadow(
