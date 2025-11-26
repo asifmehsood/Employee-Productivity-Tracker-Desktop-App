@@ -1,11 +1,13 @@
 /// Task List Screen
 /// Displays all tasks with filtering options
+library;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import '../models/task_model.dart';
 import '../core/utils/date_time_helper.dart';
+import 'task_detail_screen.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
@@ -75,38 +77,68 @@ class _TaskListScreenState extends State<TaskListScreen> {
   Widget _buildTaskCard(TaskModel task, TaskProvider provider) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ListTile(
-        leading: Icon(
-          _getStatusIcon(task.status),
-          color: _getStatusColor(task.status),
-        ),
-        title: Text(
-          task.taskName,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (task.taskDescription.isNotEmpty)
-              Text(task.taskDescription),
-            const SizedBox(height: 4),
-            Text(
-              'Duration: ${task.formattedDuration}',
-              style: TextStyle(color: Colors.grey[600]),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TaskDetailScreen(task: task),
             ),
-            Text(
-              DateTimeHelper.formatDateTime(task.startTime),
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-            ),
-          ],
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              Icon(
+                _getStatusIcon(task.status),
+                color: _getStatusColor(task.status),
+                size: 32,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      task.taskName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    if (task.taskDescription.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        task.taskDescription,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Duration: ${task.formattedDuration}',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
+                    Text(
+                      DateTimeHelper.formatDateTime(task.startTime),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: Colors.grey[600],
+              ),
+            ],
+          ),
         ),
-        isThreeLine: true,
-        trailing: task.isPaused
-            ? IconButton(
-                icon: const Icon(Icons.play_arrow),
-                onPressed: () => provider.resumeTask(task.id),
-              )
-            : null,
       ),
     );
   }

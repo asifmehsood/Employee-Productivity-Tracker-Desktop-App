@@ -10,6 +10,7 @@ import '../core/utils/date_time_helper.dart';
 import '../core/constants/app_constants.dart';
 import 'task_form_screen.dart';
 import 'task_list_screen.dart';
+import 'task_detail_screen.dart';
 import 'settings_screen.dart';
 import 'calendar_screen.dart';
 import 'profile_screen.dart';
@@ -424,6 +425,31 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 ElevatedButton.icon(
                   onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => TaskDetailScreen(task: task),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.info_outline),
+                  label: const Text('View Details'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2a2a2a),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
+                    ),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: const Color(0xFF1c4d2c).withOpacity(0.5), width: 1),
+                    ),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {
                     _showStartTaskDialog(context);
                   },
                   icon: const Icon(Icons.add_task),
@@ -502,33 +528,41 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStatistics(TaskProvider taskProvider) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildStatItem(
-              'Total Tasks',
-              taskProvider.tasks.length.toString(),
-              Icons.list,
+    return StreamBuilder(
+      stream: Stream.periodic(const Duration(seconds: 1)),
+      builder: (context, snapshot) {
+        // Watch for real-time updates
+        final provider = context.watch<TaskProvider>();
+        
+        return Card(
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatItem(
+                  'Total Tasks',
+                  provider.tasks.length.toString(),
+                  Icons.list,
+                ),
+                _buildStatItem(
+                  'Active',
+                  provider.runningTasks.length.toString(),
+                  Icons.play_circle,
+                  color: Colors.green,
+                ),
+                _buildStatItem(
+                  'Completed',
+                  provider.completedTasks.length.toString(),
+                  Icons.check_circle,
+                  color: Colors.blue,
+                ),
+              ],
             ),
-            _buildStatItem(
-              'Active',
-              taskProvider.activeTasks.length.toString(),
-              Icons.play_circle,
-              color: Colors.green,
-            ),
-            _buildStatItem(
-              'Completed',
-              taskProvider.completedTasks.length.toString(),
-              Icons.check_circle,
-              color: Colors.blue,
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

@@ -27,6 +27,8 @@ class TaskProvider with ChangeNotifier {
 
   List<TaskModel> get activeTasks =>
       _tasks.where((t) => t.isActive).toList();
+  List<TaskModel> get runningTasks =>
+      _tasks.where((t) => t.isRunning).toList();
   List<TaskModel> get completedTasks =>
       _tasks.where((t) => t.isCompleted).toList();
   List<TaskModel> get pausedTasks =>

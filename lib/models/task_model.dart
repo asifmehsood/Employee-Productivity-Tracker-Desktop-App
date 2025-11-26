@@ -80,6 +80,12 @@ class TaskModel {
   bool get isPaused => status == 'paused';
   bool get isCompleted => status == 'completed';
   
+  // Check if task is actually running right now (not scheduled for future, not paused)
+  bool get isRunning {
+    final now = DateTime.now();
+    return isActive && !startTime.isAfter(now);
+  }
+  
   // Convert to Map for database storage
   Map<String, dynamic> toMap() {
     return {
