@@ -3,6 +3,7 @@
 /// 
 /// IMPORTANT: These values should be loaded from secure storage or environment
 /// Never hardcode production credentials in source code
+library;
 
 class AzureConfig {
   // Azure Storage Account Details

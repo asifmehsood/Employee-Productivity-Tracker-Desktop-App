@@ -1,12 +1,12 @@
 /// Azure Service
 /// Handles file uploads to Azure Blob Storage
 /// Manages authentication and blob operations
+library;
 
 import 'dart:io';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
 import '../constants/azure_config.dart';
 import '../../models/screenshot_model.dart';
 import 'database_helper.dart';

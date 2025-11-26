@@ -64,12 +64,10 @@ class MyApp extends StatelessWidget {
             primary: const Color(0xFF1c4d2c), // Main green
             secondary: const Color(0xFF2d7a47), // Lighter green
             tertiary: const Color(0xFF0f2619), // Darkest green
-            surface: const Color(0xFF1a1a1a), // Dark card background
-            background: const Color(0xFF0d0d0d), // Pure dark background
+            surface: const Color(0xFF1a1a1a), // Pure dark background
             onPrimary: Colors.white,
             onSecondary: Colors.white,
-            onSurface: const Color(0xFFe8e8e8), // Light text
-            onBackground: const Color(0xFFe8e8e8),
+            onSurface: const Color(0xFFe8e8e8),
             error: const Color(0xFFff5252),
             brightness: Brightness.dark,
           ),
@@ -200,11 +198,6 @@ class _AppInitializerState extends State<AppInitializer> with TrayListener {
       ),
     );
 
-    // Check if employee setup is required (only if not logged in via sign in)
-    if (!authProvider.isSetup()) {
-      await _showEmployeeSetupDialog();
-    }
-
     setState(() => _isInitializing = false);
   }
 
@@ -255,54 +248,6 @@ class _AppInitializerState extends State<AppInitializer> with TrayListener {
     } else if (menuItem.key == 'exit_app') {
       windowManager.destroy();
     }
-  }
-
-  Future<void> _showEmployeeSetupDialog() async {
-    final nameController = TextEditingController();
-    final idController = TextEditingController();
-
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Employee Setup'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: idController,
-              decoration: const InputDecoration(
-                labelText: 'Employee ID',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Employee Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () async {
-              if (idController.text.isNotEmpty &&
-                  nameController.text.isNotEmpty) {
-                await context.read<AuthProvider>().login(
-                      employeeId: idController.text,
-                      employeeName: nameController.text,
-                    );
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
