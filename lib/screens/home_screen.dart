@@ -23,16 +23,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Task Creation', style: TextStyle(fontWeight: FontWeight.w600)),
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF0d0d0d),
         elevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.black,
+                const Color(0xFF0d0d0d),
                 const Color(0xFF1c4d2c).withOpacity(0.3),
               ],
               begin: Alignment.topLeft,
@@ -68,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Consumer2<TaskProvider, AuthProvider>(
             builder: (context, taskProvider, authProvider, child) {
               return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24.0, 100.0, 24.0, 24.0),
+            padding: const EdgeInsets.all(24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

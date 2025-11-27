@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             gradient: LinearGradient(
               colors: [
                 Colors.black,
-                const Color(0xFF1c4d2c).withOpacity(0.3),
+                const Color(0xFF1c4d2c).withOpacity(1),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -88,7 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
           
           return SingleChildScrollView(
-            padding: const EdgeInsets.only(top: 80),
+            padding: const EdgeInsets.all(24.0),
             child: Column(
               children: [
                 const SizedBox(height: 40),

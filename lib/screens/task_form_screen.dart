@@ -80,16 +80,15 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Create New Task', style: TextStyle(fontWeight: FontWeight.w600)),
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF0d0d0d),
         elevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.black,
+                const Color(0xFF0d0d0d),
                 const Color(0xFF1c4d2c).withOpacity(0.3),
               ],
               begin: Alignment.topLeft,

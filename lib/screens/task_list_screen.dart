@@ -41,17 +41,16 @@ class _TaskListScreenState extends State<TaskListScreen> with SingleTickerProvid
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0d0d0d),
-      extendBodyBehindAppBar: true,
       drawer: const AppDrawer(currentPage: DrawerPage.allTasks),
       appBar: AppBar(
         title: const Text('All Tasks', style: TextStyle(fontWeight: FontWeight.w600)),
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF0d0d0d),
         elevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.black,
+                const Color(0xFF0d0d0d),
                 const Color(0xFF1c4d2c).withOpacity(0.3),
               ],
               begin: Alignment.topLeft,
@@ -88,7 +87,7 @@ class _TaskListScreenState extends State<TaskListScreen> with SingleTickerProvid
               final tasks = _getFilteredTasks(taskProvider);
               
               return SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24.0, 100.0, 24.0, 24.0),
+                padding: const EdgeInsets.all(24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

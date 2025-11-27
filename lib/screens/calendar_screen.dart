@@ -15,17 +15,16 @@ class CalendarScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0d0d0d),
-      extendBodyBehindAppBar: true,
       drawer: const AppDrawer(currentPage: DrawerPage.workCalendar),
       appBar: AppBar(
         title: const Text('Work Calendar', style: TextStyle(fontWeight: FontWeight.w600)),
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF0d0d0d),
         elevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.black,
+                const Color(0xFF0d0d0d),
                 const Color(0xFF1c4d2c).withOpacity(0.3),
               ],
               begin: Alignment.topLeft,
@@ -57,10 +56,7 @@ class CalendarScreen extends StatelessWidget {
               end: Alignment.bottomRight,
             ),
           ),
-          child: const Padding(
-            padding: EdgeInsets.only(top: 80),
-            child: CalendarView(),
-          ),
+          child: const CalendarView(),
         ),
       ),
     );

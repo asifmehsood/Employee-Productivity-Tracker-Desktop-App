@@ -88,17 +88,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0d0d0d),
-      extendBodyBehindAppBar: true,
       drawer: const AppDrawer(currentPage: DrawerPage.settings),
       appBar: AppBar(
         title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.w600)),
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF0d0d0d),
         elevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.black,
+                const Color(0xFF0d0d0d),
                 const Color(0xFF1c4d2c).withOpacity(0.3),
               ],
               begin: Alignment.topLeft,
@@ -139,7 +138,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24.0, 100.0, 24.0, 24.0),
+              padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -199,57 +198,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       focusedBorder: const OutlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFF3fd884), width: 2),
                       ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // App Settings
-                  const Text(
-                    'Application Settings',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1a1a1a),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[800]!),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Screenshot Interval',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '$_screenshotInterval minutes',
-                          style: TextStyle(color: Colors.grey[500]),
-                        ),
-                        Slider(
-                          value: _screenshotInterval.toDouble(),
-                          min: 1,
-                          max: 60,
-                          divisions: 59,
-                          label: '$_screenshotInterval min',
-                          activeColor: const Color(0xFF3fd884),
-                          inactiveColor: Colors.grey[800],
-                          onChanged: (value) {
-                            setState(() => _screenshotInterval = value.toInt());
-                          },
-                        ),
-                      ],
                     ),
                   ),
 
