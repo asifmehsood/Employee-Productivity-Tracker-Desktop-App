@@ -125,7 +125,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
             child: SlideTransition(
               position: _slideAnimation,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24.0, 120.0, 24.0, 24.0),
+                padding: const EdgeInsets.fromLTRB(24.0, 60.0, 24.0, 24.0),
                 child: Form(
                   key: _formKey,
                   child: Column(
