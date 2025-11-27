@@ -53,10 +53,11 @@ class AppConstants {
   static const double cardElevation = 2.0;
   
   // Window Settings (Desktop)
+  // Optimized for 13-inch laptop screens (1280x720)
   static const double minWindowWidth = 800.0;
   static const double minWindowHeight = 600.0;
   static const double defaultWindowWidth = 1000.0;
-  static const double defaultWindowHeight = 700.0;
+  static const double defaultWindowHeight = 650.0;
   
   // API Timeouts
   static const int apiTimeoutSeconds = 30;
