@@ -90,10 +90,18 @@ class TaskProvider with ChangeNotifier {
       print('Scheduled End Time: $scheduledEndTime');
       print('Current Time: ${DateTime.now()}');
       
-      // Stop any currently active task
+      // Stop any currently active task only if it has actually started
       if (_activeTask != null) {
-        print('Stopping previous active task: ${_activeTask!.taskName}');
-        await stopTask(_activeTask!.id);
+        final now = DateTime.now();
+        // Only stop if the task has actually started (start time is not in the future)
+        if (!_activeTask!.startTime.isAfter(now)) {
+          print('Stopping previous active task: ${_activeTask!.taskName}');
+          await stopTask(_activeTask!.id);
+        } else {
+          print('Previous task is scheduled for future, not stopping it: ${_activeTask!.taskName}');
+          // Just clear the active task reference since it hasn't started
+          _activeTask = null;
+        }
       }
 
       // Use scheduled start time or current time
