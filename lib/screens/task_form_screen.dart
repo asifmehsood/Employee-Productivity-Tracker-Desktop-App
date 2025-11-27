@@ -242,13 +242,11 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
   }
 
   Widget _buildTaskNameField() {
-    return _AnimatedTextFieldWrapper(
+    return TextFormField(
+      controller: _taskNameController,
       focusNode: _taskNameFocus,
-      child: TextFormField(
-        controller: _taskNameController,
-        focusNode: _taskNameFocus,
-        style: const TextStyle(color: Colors.white, fontSize: 16),
-        decoration: InputDecoration(
+      style: const TextStyle(color: Colors.white, fontSize: 16),
+      decoration: InputDecoration(
           hintText: 'Task Name',
           hintStyle: TextStyle(
             color: Colors.grey[500],
@@ -280,7 +278,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF3fd884), width: 2),
+            borderSide: const BorderSide(color: Color(0xFF1c4d2c), width: 2),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -288,30 +286,33 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF3fd884), width: 2),
+            borderSide: const BorderSide(color: Colors.red, width: 2),
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return '⚠️ Please enter a task name';
-          }
-          return null;
-        },
-        textCapitalization: TextCapitalization.words,
-      ),
+      onChanged: (value) {
+        // Revalidate on text change to clear error and turn border green
+        if (value.isNotEmpty) {
+          _formKey.currentState?.validate();
+        }
+      },
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return '⚠️ Please enter a task name';
+        }
+        return null;
+      },
+      textCapitalization: TextCapitalization.words,
     );
   }
 
   Widget _buildDescriptionField() {
-    return _AnimatedTextFieldWrapper(
+    return TextFormField(
+      controller: _taskDescriptionController,
       focusNode: _taskDescriptionFocus,
-      child: TextFormField(
-        controller: _taskDescriptionController,
-        focusNode: _taskDescriptionFocus,
-        style: const TextStyle(color: Colors.white, fontSize: 16),
-        maxLines: 4,
-        decoration: InputDecoration(
+      style: const TextStyle(color: Colors.white, fontSize: 16),
+      maxLines: 4,
+      decoration: InputDecoration(
           hintText: 'Task Description',
           hintStyle: TextStyle(
             color: Colors.grey[500],
@@ -343,7 +344,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF3fd884), width: 2),
+            borderSide: const BorderSide(color: Color(0xFF1c4d2c), width: 2),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -351,13 +352,12 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF3fd884), width: 2),
+            borderSide: const BorderSide(color: Colors.red, width: 2),
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         ),
-        textCapitalization: TextCapitalization.sentences,
-      ),
-    );
+      textCapitalization: TextCapitalization.sentences,
+      );
   }
 
   Widget _buildDateTimePickers() {
@@ -502,15 +502,137 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
 
     // Validate date/time selection
     if (_startDateTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select task start time')),
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF1a1a1a),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: const Color(0xFF1c4d2c).withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF1c4d2c).withOpacity(0.3),
+                      const Color(0xFF2d7a47).withOpacity(0.2),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.access_time,
+                  color: Color(0xFF1c4d2c),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Start Time Required',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Please select task start time to continue.',
+            style: TextStyle(
+              color: Color(0xFFb0b0b0),
+              fontSize: 14,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFF1c4d2c),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
       );
       return;
     }
 
     if (_endDateTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select task stop time')),
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF1a1a1a),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(
+              color: const Color(0xFF1c4d2c).withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF1c4d2c).withOpacity(0.3),
+                      const Color(0xFF2d7a47).withOpacity(0.2),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.access_time,
+                  color: Color(0xFF1c4d2c),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Stop Time Required',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Please select task stop time to continue.',
+            style: TextStyle(
+              color: Color(0xFFb0b0b0),
+              fontSize: 14,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFF1c4d2c),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
       );
       return;
     }
@@ -602,25 +724,17 @@ class _AnimatedTextFieldWrapperState extends State<_AnimatedTextFieldWrapper> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                const Color(0xFF1a1a1a),
-                _isHovered || isFocused
-                    ? const Color(0xFF1c4d2c).withOpacity(0.15)
-                    : const Color(0xFF1a1a1a),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            gradient: _isHovered || isFocused
+                ? LinearGradient(
+                    colors: [
+                      const Color(0xFF1a1a1a),
+                      const Color(0xFF1c4d2c).withOpacity(0.08),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isFocused
-                  ? const Color(0xFF3fd884)
-                  : _isHovered
-                      ? const Color(0xFF1c4d2c).withOpacity(0.5)
-                      : Colors.grey.withOpacity(0.2),
-              width: isFocused ? 2 : 1,
-            ),
             boxShadow: [
               if (isFocused)
                 BoxShadow(
