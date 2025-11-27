@@ -80,15 +80,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
+        backgroundColor: Color(0xFF0d0d0d),
         drawer: AppDrawer(currentPage: DrawerPage.settings),
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF3fd884))),
       );
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0d0d0d),
+      extendBodyBehindAppBar: true,
       drawer: const AppDrawer(currentPage: DrawerPage.settings),
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.black,
+                const Color(0xFF1c4d2c).withOpacity(0.3),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
@@ -96,77 +113,160 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            // Azure Settings
-            const Text(
-              'Azure Blob Storage',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.topRight,
+            radius: 1.5,
+            colors: [
+              Color(0xFF1a1a1a),
+              Color(0xFF0d0d0d),
+            ],
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF1c4d2c).withOpacity(0.05),
+                Colors.transparent,
+                const Color(0xFF1c4d2c).withOpacity(0.03),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _azureAccountController,
-              decoration: const InputDecoration(
-                labelText: 'Storage Account Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _azureKeyController,
-              decoration: const InputDecoration(
-                labelText: 'Access Key',
-                border: OutlineInputBorder(),
-              ),
-              obscureText: true,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _azureContainerController,
-              decoration: const InputDecoration(
-                labelText: 'Container Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
+          ),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24.0, 100.0, 24.0, 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Azure Settings
+                  const Text(
+                    'Azure Blob Storage',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _azureAccountController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Storage Account Name',
+                      labelStyle: TextStyle(color: Colors.grey[500]),
+                      border: const OutlineInputBorder(),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey[800]!),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF3fd884), width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _azureKeyController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Access Key',
+                      labelStyle: TextStyle(color: Colors.grey[500]),
+                      border: const OutlineInputBorder(),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey[800]!),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF3fd884), width: 2),
+                      ),
+                    ),
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _azureContainerController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'Container Name',
+                      labelStyle: TextStyle(color: Colors.grey[500]),
+                      border: const OutlineInputBorder(),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey[800]!),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF3fd884), width: 2),
+                      ),
+                    ),
+                  ),
 
-            const SizedBox(height: 32),
+                  const SizedBox(height: 32),
 
-            // App Settings
-            const Text(
-              'Application Settings',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              title: const Text('Screenshot Interval'),
-              subtitle: Text('$_screenshotInterval minutes'),
-              trailing: SizedBox(
-                width: 150,
-                child: Slider(
-                  value: _screenshotInterval.toDouble(),
-                  min: 1,
-                  max: 60,
-                  divisions: 59,
-                  label: '$_screenshotInterval min',
-                  onChanged: (value) {
-                    setState(() => _screenshotInterval = value.toInt());
-                  },
-                ),
+                  // App Settings
+                  const Text(
+                    'Application Settings',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1a1a1a),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[800]!),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Screenshot Interval',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '$_screenshotInterval minutes',
+                          style: TextStyle(color: Colors.grey[500]),
+                        ),
+                        Slider(
+                          value: _screenshotInterval.toDouble(),
+                          min: 1,
+                          max: 60,
+                          divisions: 59,
+                          label: '$_screenshotInterval min',
+                          activeColor: const Color(0xFF3fd884),
+                          inactiveColor: Colors.grey[800],
+                          onChanged: (value) {
+                            setState(() => _screenshotInterval = value.toInt());
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    onPressed: _saveSettings,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1c4d2c),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.all(16),
+                    ),
+                    child: const Text('Save Settings', style: TextStyle(fontSize: 16)),
+                  ),
+                ],
               ),
             ),
-
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _saveSettings,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.all(16),
-              ),
-              child: const Text('Save Settings', style: TextStyle(fontSize: 16)),
-            ),
-          ],
+          ),
         ),
       ),
     );

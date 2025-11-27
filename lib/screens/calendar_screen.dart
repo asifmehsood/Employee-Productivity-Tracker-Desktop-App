@@ -15,37 +15,54 @@ class CalendarScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0d0d0d),
+      extendBodyBehindAppBar: true,
       drawer: const AppDrawer(currentPage: DrawerPage.workCalendar),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1a1a1a),
+        title: const Text('Work Calendar', style: TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF3fd884), Color(0xFF2d7a47)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.calendar_month, color: Colors.white, size: 20),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.black,
+                const Color(0xFF1c4d2c).withOpacity(0.3),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            const SizedBox(width: 12),
-            const Text(
-              'Work Calendar',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
-      body: const CalendarView(),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.topRight,
+            radius: 1.5,
+            colors: [
+              Color(0xFF1a1a1a),
+              Color(0xFF0d0d0d),
+            ],
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF1c4d2c).withOpacity(0.05),
+                Colors.transparent,
+                const Color(0xFF1c4d2c).withOpacity(0.03),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: const Padding(
+            padding: EdgeInsets.only(top: 80),
+            child: CalendarView(),
+          ),
+        ),
+      ),
     );
   }
 }

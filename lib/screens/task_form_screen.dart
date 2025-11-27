@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import '../providers/auth_provider.dart';
+import 'home_screen.dart';
 
 class TaskFormScreen extends StatefulWidget {
   const TaskFormScreen({super.key});
@@ -88,7 +89,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.black.withOpacity(0.8),
+                Colors.black,
                 const Color(0xFF1c4d2c).withOpacity(0.3),
               ],
               begin: Alignment.topLeft,
@@ -249,14 +250,11 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
         focusNode: _taskNameFocus,
         style: const TextStyle(color: Colors.white, fontSize: 16),
         decoration: InputDecoration(
-          labelText: 'Task Name',
-          labelStyle: TextStyle(
-            color: _taskNameFocus.hasFocus ? const Color(0xFF1c4d2c) : Colors.grey[500],
+          hintText: 'Task Name',
+          hintStyle: TextStyle(
+            color: Colors.grey[500],
             fontSize: 16,
-            fontWeight: FontWeight.w500,
           ),
-          hintText: 'e.g., Complete project documentation',
-          hintStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
           prefixIcon: Container(
             margin: const EdgeInsets.all(12),
             padding: const EdgeInsets.all(8),
@@ -283,7 +281,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF1c4d2c), width: 2),
+            borderSide: const BorderSide(color: Color(0xFF3fd884), width: 2),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -291,7 +289,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.red, width: 2),
+            borderSide: const BorderSide(color: Color(0xFF3fd884), width: 2),
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         ),
@@ -315,14 +313,11 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
         style: const TextStyle(color: Colors.white, fontSize: 16),
         maxLines: 4,
         decoration: InputDecoration(
-          labelText: 'Task Description',
-          labelStyle: TextStyle(
-            color: _taskDescriptionFocus.hasFocus ? const Color(0xFF1c4d2c) : Colors.grey[500],
+          hintText: 'Task Description',
+          hintStyle: TextStyle(
+            color: Colors.grey[500],
             fontSize: 16,
-            fontWeight: FontWeight.w500,
           ),
-          hintText: 'Describe what needs to be done...',
-          hintStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
           prefixIcon: Container(
             margin: const EdgeInsets.all(12),
             padding: const EdgeInsets.all(8),
@@ -349,7 +344,15 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF1c4d2c), width: 2),
+            borderSide: const BorderSide(color: Color(0xFF3fd884), width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Colors.red, width: 1),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFF3fd884), width: 2),
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         ),
@@ -528,19 +531,20 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
 
     if (task != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Task created successfully!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 1),
+        SnackBar(
+          content: const Text('Task created successfully!'),
+          backgroundColor: const Color(0xFF1c4d2c),
+          duration: const Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
         ),
       );
       
-      // Navigate to fresh task creation page
+      // Navigate to home page (Task Creation page)
       await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const TaskFormScreen()),
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
       }
       
@@ -673,9 +677,10 @@ class _DateTimePickerCardState extends State<_DateTimePickerCard> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       cursor: widget.isEnabled ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
-      child: AnimatedContainer(
+      child: AnimatedScale(
+        scale: _isHovered && widget.isEnabled ? 1.01 : 1.0,
         duration: const Duration(milliseconds: 200),
-        transform: Matrix4.identity()..scale(_isHovered && widget.isEnabled ? 1.02 : 1.0),
+        curve: Curves.easeInOut,
         child: InkWell(
           onTap: widget.isEnabled ? widget.onTap : null,
           borderRadius: BorderRadius.circular(16),

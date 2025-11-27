@@ -22,15 +22,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       drawer: const AppDrawer(currentPage: DrawerPage.dashboard),
       appBar: AppBar(
         title: const Text('Dashboard', style: TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.black.withOpacity(0.8),
-                const Color(0xFF1c4d2c).withOpacity(0.2),
+                Colors.black,
+                const Color(0xFF1c4d2c).withOpacity(0.3),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -64,7 +67,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Consumer<TaskProvider>(
             builder: (context, taskProvider, child) {
               return SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.fromLTRB(24.0, 100.0, 24.0, 24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [

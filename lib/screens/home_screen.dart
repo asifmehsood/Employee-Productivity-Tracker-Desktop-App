@@ -26,12 +26,14 @@ class _HomeScreenState extends State<HomeScreen> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Task Creation', style: TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Colors.black.withOpacity(0.8),
-                const Color(0xFF1c4d2c).withOpacity(0.2),
+                Colors.black,
+                const Color(0xFF1c4d2c).withOpacity(0.3),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -314,7 +316,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 ElevatedButton.icon(
                   onPressed: () {
-                    _showStartTaskDialog(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TaskFormScreen()),
+                    );
                   },
                   icon: const Icon(Icons.add_task),
                   label: const Text('New Task'),

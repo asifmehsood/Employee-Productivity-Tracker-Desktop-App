@@ -41,148 +41,174 @@ class _TaskListScreenState extends State<TaskListScreen> with SingleTickerProvid
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0d0d0d),
+      extendBodyBehindAppBar: true,
       drawer: const AppDrawer(currentPage: DrawerPage.allTasks),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1a1a1a),
+        title: const Text('All Tasks', style: TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF3fd884), Color(0xFF2d7a47)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.task_alt, color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'All Tasks',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1a1a1a),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF3fd884).withOpacity(0.3), width: 1),
-            ),
-            child: PopupMenuButton<String>(
-              onSelected: (value) => setState(() => _filter = value),
-              color: const Color(0xFF1a1a1a),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: const Color(0xFF3fd884).withOpacity(0.3), width: 1),
-              ),
-              icon: Row(
-                children: [
-                  Icon(
-                    _getFilterIcon(_filter),
-                    color: const Color(0xFF3fd884),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _getFilterLabel(_filter),
-                    style: const TextStyle(
-                      color: Color(0xFF3fd884),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.arrow_drop_down,
-                    color: Color(0xFF3fd884),
-                  ),
-                ],
-              ),
-              itemBuilder: (context) => [
-                _buildMenuItem('all', 'All Tasks', Icons.list),
-                _buildMenuItem('active', 'Active', Icons.play_circle),
-                _buildMenuItem('paused', 'Paused', Icons.pause_circle),
-                _buildMenuItem('completed', 'Completed', Icons.check_circle),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.black,
+                const Color(0xFF1c4d2c).withOpacity(0.3),
               ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-        ],
+        ),
       ),
-      body: Consumer<TaskProvider>(
-        builder: (context, taskProvider, child) {
-          if (taskProvider.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF3fd884),
-              ),
-            );
-          }
-
-          final tasks = _getFilteredTasks(taskProvider);
-
-          if (tasks.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF3fd884).withOpacity(0.1),
-                          const Color(0xFF2d7a47).withOpacity(0.05),
-                        ],
-                      ),
-                      shape: BoxShape.circle,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment.topRight,
+            radius: 1.5,
+            colors: [
+              Color(0xFF1a1a1a),
+              Color(0xFF0d0d0d),
+            ],
+          ),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF1c4d2c).withOpacity(0.05),
+                Colors.transparent,
+                const Color(0xFF1c4d2c).withOpacity(0.03),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Consumer<TaskProvider>(
+            builder: (context, taskProvider, _) {
+              final tasks = _getFilteredTasks(taskProvider);
+              
+              return SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24.0, 100.0, 24.0, 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Filter Section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'My Tasks',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1a1a1a),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFF3fd884).withOpacity(0.3), width: 1),
+                          ),
+                          child: PopupMenuButton<String>(
+                            onSelected: (value) => setState(() => _filter = value),
+                            color: const Color(0xFF1a1a1a),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: const Color(0xFF3fd884).withOpacity(0.3), width: 1),
+                            ),
+                            icon: Row(
+                              children: [
+                                Icon(
+                                  _getFilterIcon(_filter),
+                                  color: const Color(0xFF3fd884),
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _getFilterLabel(_filter),
+                                  style: const TextStyle(
+                                    color: Color(0xFF3fd884),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Color(0xFF3fd884),
+                                ),
+                              ],
+                            ),
+                            itemBuilder: (context) => [
+                              _buildMenuItem('all', 'All Tasks', Icons.list),
+                              _buildMenuItem('active', 'Active', Icons.play_circle),
+                              _buildMenuItem('paused', 'Paused', Icons.pause_circle),
+                              _buildMenuItem('completed', 'Completed', Icons.check_circle),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    child: Icon(
-                      _getFilterIcon(_filter),
-                      size: 64,
-                      color: const Color(0xFF3fd884).withOpacity(0.5),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'No ${_getFilterLabel(_filter).toLowerCase()} found',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Start by creating a new task',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.4),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: tasks.length,
-            itemBuilder: (context, index) {
-              return _buildTaskCard(tasks[index], taskProvider, index);
+                    const SizedBox(height: 24),
+                    const SizedBox(height: 24),
+                    
+                    // Task List
+                    if (tasks.isEmpty)
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    const Color(0xFF3fd884).withOpacity(0.1),
+                                    const Color(0xFF2d7a47).withOpacity(0.05),
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                _getFilterIcon(_filter),
+                                size: 64,
+                                color: const Color(0xFF3fd884).withOpacity(0.5),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              'No ${_getFilterLabel(_filter).toLowerCase()} found',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Start by creating a new task',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.4),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ...tasks.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final task = entry.value;
+                        return _buildTaskCard(task, taskProvider, index);
+                      }).toList(),
+                  ],
+                ),
+              );
             },
-          );
-        },
+          ),
+        ),
       ),
     );
   }

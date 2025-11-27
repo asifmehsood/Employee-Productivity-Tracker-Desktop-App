@@ -1,6 +1,7 @@
 /// Screenshot Service
 /// Handles screenshot capture using screen_capturer plugin
 /// Supports Windows, macOS, and Linux desktop platforms
+library;
 
 import 'dart:io';
 import 'package:screen_capturer/screen_capturer.dart';
@@ -23,12 +24,26 @@ class ScreenshotService {
       final fileName = '$screenshotId.${AppConstants.screenshotFormat}';
       final filePath = await FileHelper.getScreenshotPath(fileName);
 
-      // Capture the screenshot
-      final capturedData = await _screenCapturer.capture(
-        mode: CaptureMode.screen,
-        imagePath: filePath,
-        silent: true, // Capture silently without notification
-      );
+      // Capture the screenshot with retry mechanism
+      CapturedData? capturedData;
+      int retries = 2;
+      
+      for (int i = 0; i < retries; i++) {
+        capturedData = await _screenCapturer.capture(
+          mode: CaptureMode.screen,
+          imagePath: filePath,
+          silent: true, // Capture silently without notification
+        );
+        
+        if (capturedData != null && capturedData.imagePath != null) {
+          break;
+        }
+        
+        // Wait a bit before retry
+        if (i < retries - 1) {
+          await Future.delayed(const Duration(milliseconds: 500));
+        }
+      }
 
       if (capturedData != null && capturedData.imagePath != null) {
         // Create screenshot model
@@ -46,7 +61,7 @@ class ScreenshotService {
         return screenshot;
       }
 
-      print('Screenshot capture failed - no data returned');
+      print('Screenshot capture failed - no data returned after retries');
       return null;
     } catch (e) {
       print('Error capturing screenshot: $e');
