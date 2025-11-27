@@ -398,11 +398,13 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
   }
 
   Future<void> _pickStartDateTime() async {
-    // Pick Date
+    final now = DateTime.now();
+    
+    // Pick Date - only allow today or future dates
     final pickedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
+      initialDate: now,
+      firstDate: now, // Cannot select past dates
       lastDate: DateTime(2100),
     );
 
@@ -416,14 +418,87 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
 
     if (pickedTime == null || !mounted) return;
 
+    final selectedDateTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    // Validate that selected time is not in the past
+    if (selectedDateTime.isBefore(now)) {
+      if (mounted) {
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: const Color(0xFF1a1a1a),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                color: const Color(0xFF1c4d2c).withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.orange.withOpacity(0.3),
+                        Colors.orange.withOpacity(0.2),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.warning_amber_rounded,
+                    color: Colors.orange,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Invalid Time',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            content: const Text(
+              'Start time cannot be in the past. Please select current or future time.',
+              style: TextStyle(
+                color: Color(0xFFb0b0b0),
+                fontSize: 14,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  backgroundColor: const Color(0xFF1c4d2c),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() {
-      _startDateTime = DateTime(
-        pickedDate.year,
-        pickedDate.month,
-        pickedDate.day,
-        pickedTime.hour,
-        pickedTime.minute,
-      );
+      _startDateTime = selectedDateTime;
       // Reset end time if it's before the new start time
       if (_endDateTime != null && _endDateTime!.isBefore(_startDateTime!)) {
         _endDateTime = null;
