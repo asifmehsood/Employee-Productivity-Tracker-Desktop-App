@@ -232,8 +232,9 @@ class _HomeScreenState extends State<HomeScreen> {
               runSpacing: 12,
               alignment: WrapAlignment.center,
               children: [
-                // Show Pause button only when task is active, not paused
-                if (task.status == AppConstants.taskStatusActive)
+                // Show Pause button only when task is active, not paused, and has actually started
+                if (task.status == AppConstants.taskStatusActive && 
+                    !task.startTime.isAfter(now))
                   ElevatedButton.icon(
                     onPressed: () async {
                       await _pauseTask(taskProvider, task.id);
@@ -247,8 +248,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                // Show Resume button only when task is paused
-                if (task.status == AppConstants.taskStatusPaused)
+                // Show Resume button only when task is paused and has actually started
+                if (task.status == AppConstants.taskStatusPaused && 
+                    !task.startTime.isAfter(now))
                   ElevatedButton.icon(
                     onPressed: () async {
                       await _resumeTask(taskProvider, task.id);
