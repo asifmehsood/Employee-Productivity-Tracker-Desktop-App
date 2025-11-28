@@ -233,10 +233,20 @@ class TaskProvider with ChangeNotifier {
       if (task.status == AppConstants.taskStatusPaused) {
         print('Task is paused. Completing without timer stop.');
         
+        // If task is paused, add the final pause duration to totalPausedDuration
+        int finalTotalPausedDuration = task.totalPausedDuration;
+        if (task.pausedAt != null) {
+          final pauseDuration = scheduledEndTime.difference(task.pausedAt!).inMilliseconds;
+          finalTotalPausedDuration = task.totalPausedDuration + pauseDuration;
+          print('Adding final pause duration: ${pauseDuration}ms');
+          print('Total paused duration: ${finalTotalPausedDuration}ms');
+        }
+        
         // Complete the task directly without stopping timer (already stopped)
         final completedTask = task.copyWith(
           status: AppConstants.taskStatusCompleted,
           endTime: scheduledEndTime, // Use scheduled end time, not now
+          totalPausedDuration: finalTotalPausedDuration,
         );
         
         await _db.updateTask(completedTask);
@@ -268,9 +278,20 @@ class TaskProvider with ChangeNotifier {
       final task = _tasks.firstWhere((t) => t.id == taskId);
       print('Found task to stop: ${task.taskName}');
       
+      // If task is currently paused, add the final pause duration to totalPausedDuration
+      int finalTotalPausedDuration = task.totalPausedDuration;
+      if (task.isPaused && task.pausedAt != null) {
+        final now = DateTime.now();
+        final currentPauseDuration = now.difference(task.pausedAt!).inMilliseconds;
+        finalTotalPausedDuration = task.totalPausedDuration + currentPauseDuration;
+        print('Task is paused. Adding final pause duration: ${currentPauseDuration}ms');
+        print('Total paused duration: ${finalTotalPausedDuration}ms');
+      }
+      
       final updatedTask = task.copyWith(
         status: AppConstants.taskStatusCompleted,
         endTime: DateTime.now(),
+        totalPausedDuration: finalTotalPausedDuration,
       );
 
       await _db.updateTask(updatedTask);
@@ -365,10 +386,20 @@ class TaskProvider with ChangeNotifier {
         print('Stop time was: ${task.scheduledEndTime}');
         print('Current time: $now');
         
+        // Calculate final pause duration (from pausedAt to scheduled end time)
+        int finalTotalPausedDuration = task.totalPausedDuration;
+        if (task.pausedAt != null) {
+          final pauseDuration = task.scheduledEndTime!.difference(task.pausedAt!).inMilliseconds;
+          finalTotalPausedDuration = task.totalPausedDuration + pauseDuration;
+          print('Adding final pause duration: ${pauseDuration}ms');
+          print('Total paused duration: ${finalTotalPausedDuration}ms');
+        }
+        
         // Complete the task without allowing resume
         final completedTask = task.copyWith(
           status: AppConstants.taskStatusCompleted,
           endTime: task.scheduledEndTime, // Use the scheduled end time
+          totalPausedDuration: finalTotalPausedDuration,
         );
         
         await _db.updateTask(completedTask);
