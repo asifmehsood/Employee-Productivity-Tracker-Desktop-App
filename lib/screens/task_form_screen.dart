@@ -554,10 +554,68 @@ class _TaskFormScreenState extends State<TaskFormScreen> with TickerProviderStat
     if (tentativeEndDateTime.isBefore(_startDateTime!) ||
         tentativeEndDateTime.isAtSameMomentAs(_startDateTime!)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('End time must be after start time'),
-            backgroundColor: Colors.red,
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: const Color(0xFF1a1a1a),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                color: const Color(0xFF1c4d2c).withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF1c4d2c).withOpacity(0.3),
+                        const Color(0xFF2d7a47).withOpacity(0.2),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.access_time,
+                    color: Color(0xFF1c4d2c),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Invalid Time',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            content: const Text(
+              'Stop time must be after start time.',
+              style: TextStyle(
+                color: Color(0xFFb0b0b0),
+                fontSize: 14,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  backgroundColor: const Color(0xFF1c4d2c),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('OK'),
+              ),
+            ],
           ),
         );
       }
