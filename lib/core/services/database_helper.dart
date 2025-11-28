@@ -9,6 +9,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../models/task_model.dart';
 import '../../models/screenshot_model.dart';
+import '../../models/app_usage_model.dart';
 import '../constants/app_constants.dart';
 
 class DatabaseHelper {
@@ -88,11 +89,27 @@ class DatabaseHelper {
       )
     ''');
 
+    // App Usage table
+    await db.execute('''
+      CREATE TABLE app_usage (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        app_name TEXT NOT NULL,
+        window_title TEXT NOT NULL,
+        duration_seconds INTEGER NOT NULL,
+        timestamp INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+      )
+    ''');
+
     // Create indexes for better query performance
     await db.execute('CREATE INDEX idx_task_status ON tasks(status)');
     await db.execute('CREATE INDEX idx_task_employee ON tasks(employee_id)');
     await db.execute('CREATE INDEX idx_screenshot_task ON screenshots(task_id)');
     await db.execute('CREATE INDEX idx_screenshot_uploaded ON screenshots(uploaded)');
+    await db.execute('CREATE INDEX idx_app_usage_task ON app_usage(task_id)');
+    await db.execute('CREATE INDEX idx_app_usage_app ON app_usage(app_name)');
   }
 
   /// Handle database upgrades
@@ -135,6 +152,24 @@ class DatabaseHelper {
       // Add pause tracking columns
       await db.execute('ALTER TABLE tasks ADD COLUMN paused_at INTEGER');
       await db.execute('ALTER TABLE tasks ADD COLUMN total_paused_duration INTEGER DEFAULT 0');
+    }
+    
+    if (oldVersion < 5) {
+      // Add app_usage table for window tracking
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS app_usage (
+          id TEXT PRIMARY KEY,
+          task_id TEXT NOT NULL,
+          app_name TEXT NOT NULL,
+          window_title TEXT NOT NULL,
+          duration_seconds INTEGER NOT NULL,
+          timestamp INTEGER NOT NULL,
+          created_at INTEGER NOT NULL,
+          FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+        )
+      ''');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_app_usage_task ON app_usage(task_id)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_app_usage_app ON app_usage(app_name)');
     }
   }
 
@@ -441,6 +476,92 @@ class DatabaseHelper {
       'work_sessions',
       session,
       conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+  
+  // ==================== APP USAGE OPERATIONS ====================
+  
+  /// Insert app usage data
+  Future<int> insertAppUsage(AppUsageModel appUsage) async {
+    final db = await database;
+    return await db.insert('app_usage', appUsage.toMap());
+  }
+  
+  /// Get all app usage data for a task
+  Future<List<AppUsageModel>> getAppUsageForTask(String taskId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'app_usage',
+      where: 'task_id = ?',
+      whereArgs: [taskId],
+      orderBy: 'timestamp ASC',
+    );
+    
+    return List.generate(maps.length, (i) {
+      return AppUsageModel.fromMap(maps[i]);
+    });
+  }
+  
+  /// Get aggregated app usage statistics
+  Future<List<Map<String, dynamic>>> getAggregatedAppUsage({String? taskId, DateTime? date}) async {
+    final db = await database;
+    
+    String whereClause = '';
+    List<dynamic> whereArgs = [];
+    
+    if (taskId != null) {
+      whereClause = 'task_id = ?';
+      whereArgs.add(taskId);
+    } else if (date != null) {
+      // Get all app usage for tasks on this date
+      final dateStart = DateTime(date.year, date.month, date.day).millisecondsSinceEpoch;
+      final dateEnd = DateTime(date.year, date.month, date.day, 23, 59, 59).millisecondsSinceEpoch;
+      whereClause = 'timestamp >= ? AND timestamp <= ?';
+      whereArgs.addAll([dateStart, dateEnd]);
+    }
+    
+    final query = '''
+      SELECT app_name, 
+             SUM(duration_seconds) as total_duration,
+             COUNT(*) as usage_count
+      FROM app_usage
+      ${whereClause.isNotEmpty ? 'WHERE $whereClause' : ''}
+      GROUP BY app_name
+      ORDER BY total_duration DESC
+    ''';
+    
+    return await db.rawQuery(query, whereArgs);
+  }
+  
+  /// Get recent app usage data (for dashboard)
+  Future<List<Map<String, dynamic>>> getRecentAppUsage({int limit = 10}) async {
+    final db = await database;
+    
+    // Get app usage from today
+    final today = DateTime.now();
+    final dateStart = DateTime(today.year, today.month, today.day).millisecondsSinceEpoch;
+    
+    final query = '''
+      SELECT app_name, 
+             SUM(duration_seconds) as total_duration,
+             COUNT(*) as usage_count
+      FROM app_usage
+      WHERE timestamp >= ?
+      GROUP BY app_name
+      ORDER BY total_duration DESC
+      LIMIT ?
+    ''';
+    
+    return await db.rawQuery(query, [dateStart, limit]);
+  }
+  
+  /// Delete app usage data for a task
+  Future<int> deleteAppUsageForTask(String taskId) async {
+    final db = await database;
+    return await db.delete(
+      'app_usage',
+      where: 'task_id = ?',
+      whereArgs: [taskId],
     );
   }
 }

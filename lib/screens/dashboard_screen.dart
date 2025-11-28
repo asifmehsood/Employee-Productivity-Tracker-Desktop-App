@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import '../core/utils/date_time_helper.dart';
+import '../core/services/database_helper.dart';
 import 'dart:math' as math;
 import 'common/app_drawer.dart';
 
@@ -18,6 +19,31 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   String _selectedPeriod = 'Day'; // Day, Week, Month, Year
+  List<Map<String, dynamic>> _appUsageData = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppUsageData();
+  }
+
+  Future<void> _loadAppUsageData() async {
+    try {
+      final data = await DatabaseHelper.instance.getRecentAppUsage(limit: 10);
+      if (mounted) {
+        setState(() {
+          _appUsageData = data;
+        });
+      }
+    } catch (e) {
+      print('Error loading app usage data: $e');
+      if (mounted) {
+        setState(() {
+          _appUsageData = [];
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -921,12 +947,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildAppsWebsitesCard(TaskProvider taskProvider) {
-    final apps = [
-      {'name': 'VS Code', 'percent': 59, 'duration': '2h 46min', 'color': const Color(0xFF1c4d2c)},
-      {'name': 'Chrome', 'percent': 16, 'duration': '43min', 'color': const Color(0xFF2d7a47)},
-      {'name': 'Slack', 'percent': 8, 'duration': '20min', 'color': const Color(0xFF3a9254)},
-      {'name': 'Teams', 'percent': 7, 'duration': '18min', 'color': const Color(0xFF47aa61)},
+    // Calculate total duration for percentage calculation
+    final totalDuration = _appUsageData.fold<int>(
+      0,
+      (sum, app) => sum + (app['total_duration'] as int? ?? 0),
+    );
+
+    // Define colors for different apps
+    final colors = [
+      const Color(0xFF1c4d2c),
+      const Color(0xFF2d7a47),
+      const Color(0xFF3a9254),
+      const Color(0xFF47aa61),
+      const Color(0xFF54c26e),
+      const Color(0xFF61d27b),
+      const Color(0xFF6ee288),
+      const Color(0xFF7bf295),
+      const Color(0xFF88ffa2),
+      const Color(0xFF95ffaf),
     ];
+
+    // Transform app usage data for display
+    final apps = _appUsageData.asMap().entries.map((entry) {
+      final index = entry.key;
+      final app = entry.value;
+      final duration = app['total_duration'] as int? ?? 0;
+      final percent = totalDuration > 0 ? ((duration / totalDuration) * 100).round() : 0;
+      
+      // Format duration
+      final hours = duration ~/ 3600;
+      final minutes = (duration % 3600) ~/ 60;
+      final durationStr = hours > 0 ? '${hours}h ${minutes}min' : '${minutes}min';
+
+      return {
+        'name': app['app_name'] as String,
+        'percent': percent,
+        'duration': durationStr,
+        'color': colors[index % colors.length],
+      };
+    }).toList();
 
     return _AnimatedHoverCard(
       child: Card(
@@ -939,34 +998,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Apps & Websites',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: apps.map((app) => Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: _buildAppItem(
-                        percent: app['percent'] as int,
-                        label: app['name'] as String,
-                        duration: app['duration'] as String,
-                        color: app['color'] as Color,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Apps & Websites',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
                       ),
-                    )).toList(),
-                  ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.refresh, color: Color(0xFF3fd884), size: 20),
+                      onPressed: _loadAppUsageData,
+                      tooltip: 'Refresh',
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                Expanded(
+                  child: apps.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No app usage data yet.\nStart a task to track applications.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Color(0xFFb0b0b0),
+                              fontSize: 14,
+                            ),
+                          ),
+                        )
+                      : SingleChildScrollView(
+                          child: Column(
+                            children: apps.map((app) => Padding(
+                              padding: const EdgeInsets.only(bottom: 20),
+                              child: _buildAppItem(
+                                percent: app['percent'] as int,
+                                label: app['name'] as String,
+                                duration: app['duration'] as String,
+                                color: app['color'] as Color,
+                              ),
+                            )).toList(),
+                          ),
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }

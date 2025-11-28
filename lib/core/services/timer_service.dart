@@ -8,10 +8,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_constants.dart';
 import 'screenshot_service.dart';
 import 'database_helper.dart';
+import 'window_tracker_service.dart';
 
 class TimerService {
   Timer? _timer;
   final ScreenshotService _screenshotService = ScreenshotService();
+  final WindowTrackerService _windowTracker = WindowTrackerService();
   bool _isRunning = false;
   int _intervalMinutes = AppConstants.defaultScreenshotIntervalMinutes;
   String? _activeTaskId;
@@ -83,6 +85,9 @@ class TimerService {
     _activeTaskId = taskId;
     _isRunning = true;
 
+    // Start window tracking
+    await _windowTracker.startTracking(taskId);
+
     print('Timer starting for task: $taskId');
     print('Current time: ${DateTime.now()}');
     print('Task start time: ${task.startTime}');
@@ -137,6 +142,10 @@ class TimerService {
     _timer?.cancel();
     _timer = null;
     _isRunning = false;
+    
+    // Stop window tracking
+    await _windowTracker.stopTracking();
+    
     _activeTaskId = null;
 
     print('Timer stopped');
