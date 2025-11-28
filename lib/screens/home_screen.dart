@@ -270,13 +270,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await _stopTask(taskProvider, task.id);
-                  },
-                  icon: const Icon(Icons.stop),
-                  label: const Text('Stop & Complete'),
-                  style: ElevatedButton.styleFrom(
+                // Show Stop & Complete button only when task has actually started
+                if (!task.startTime.isAfter(now))
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      await _stopTask(taskProvider, task.id);
+                    },
+                    icon: const Icon(Icons.stop),
+                    label: const Text('Stop & Complete'),
+                    style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2a2a2a),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(

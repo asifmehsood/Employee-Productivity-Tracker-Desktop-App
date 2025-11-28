@@ -98,23 +98,33 @@ class TimerService {
         if (_isRunning && _activeTaskId == taskId) {
           print('\n=== SCHEDULED TASK START - Taking first screenshot ===');
           await _captureScreenshot();
+          
+          // Start periodic timer after first screenshot
+          _timer = Timer.periodic(
+            Duration(minutes: _intervalMinutes),
+            (timer) async {
+              await _captureScreenshot();
+            },
+          );
+          print('Periodic timer started after delayed first screenshot (Interval: $_intervalMinutes minutes)');
         }
       });
     } else {
       // Task starts now or in the past, take screenshot immediately
       print('Task start time is now or in the past. Taking first screenshot immediately.');
       await _captureScreenshot();
+      
+      // Start periodic timer for subsequent screenshots
+      _timer = Timer.periodic(
+        Duration(minutes: _intervalMinutes),
+        (timer) async {
+          await _captureScreenshot();
+        },
+      );
+      print('Periodic timer started after immediate first screenshot (Interval: $_intervalMinutes minutes)');
     }
 
-    // Start periodic timer
-    _timer = Timer.periodic(
-      Duration(minutes: _intervalMinutes),
-      (timer) async {
-        await _captureScreenshot();
-      },
-    );
-
-    print('Timer started for task: $taskId (Interval: $_intervalMinutes minutes)');
+    print('Timer started for task: $taskId');
   }
 
   /// Stop the timer

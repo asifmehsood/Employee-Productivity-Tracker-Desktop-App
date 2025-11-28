@@ -146,6 +146,14 @@ class TaskProvider with ChangeNotifier {
           print('Time now: ${DateTime.now()}');
           print('Starting timer and screenshots for task: ${task.id}');
           
+          // Check if task still exists and is active
+          final currentTask = await _db.getTaskById(task.id);
+          if (currentTask == null || !currentTask.isActive) {
+            print('Task was deleted or is no longer active. Skipping delayed start.');
+            print('=== DELAYED TASK START CANCELLED ===\n');
+            return;
+          }
+          
           // Update task status to active (was created but not truly active until now)
           final activeTask = task.copyWith(status: AppConstants.taskStatusActive);
           await _db.updateTask(activeTask);
