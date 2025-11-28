@@ -27,6 +27,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadAppUsageData();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload app usage data when dependencies change (e.g., task completed)
+    _loadAppUsageData();
+  }
+
   Future<void> _loadAppUsageData() async {
     try {
       final data = await DatabaseHelper.instance.getRecentAppUsage(limit: 10);
@@ -234,44 +241,147 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // Helper method to calculate categories from tasks
-  List<Map<String, dynamic>> _calculateCategories(List<dynamic> tasks) {
-    final Map<String, int> categoryMinutes = {};
-    final completedTasks = tasks.where((t) => t.status == 'completed').toList();
+  // Helper method to categorize application names
+  String _categorizeApp(String appName) {
+    final appLower = appName.toLowerCase();
     
-    for (var task in completedTasks) {
-      final category = task.taskName.contains('Design') ? 'Design' :
-                      task.taskName.contains('Dev') || task.taskName.contains('Code') ? 'Development' :
-                      task.taskName.contains('Meet') ? 'Communication' : 'Productivity';
-      
-      final minutes = task.duration.inMinutes.toInt();
-      final currentMinutes = categoryMinutes[category] ?? 0;
-      categoryMinutes[category] = (currentMinutes + minutes) as int;
+    // Productive - Development & Work Tools
+    if (appLower.contains('vs code') || appLower.contains('visual studio') ||
+        appLower.contains('pycharm') || appLower.contains('intellij') ||
+        appLower.contains('android studio') || appLower.contains('eclipse') ||
+        appLower.contains('xcode') || appLower.contains('sublime') ||
+        appLower.contains('github') || appLower.contains('gitlab') ||
+        appLower.contains('stack overflow') || appLower.contains('stackoverflow')) {
+      return 'Development';
     }
     
-    final totalMinutes = categoryMinutes.values.fold<int>(0, (sum, mins) => sum + mins);
+    // Productive - Documentation & Office
+    if (appLower.contains('word') || appLower.contains('excel') ||
+        appLower.contains('powerpoint') || appLower.contains('outlook') ||
+        appLower.contains('notion') || appLower.contains('evernote') ||
+        appLower.contains('onenote') || appLower.contains('google docs') ||
+        appLower.contains('sheets') || appLower.contains('slides')) {
+      return 'Productivity';
+    }
     
-    if (totalMinutes == 0) {
+    // Design Tools
+    if (appLower.contains('photoshop') || appLower.contains('illustrator') ||
+        appLower.contains('figma') || appLower.contains('sketch') ||
+        appLower.contains('canva') || appLower.contains('gimp') ||
+        appLower.contains('inkscape') || appLower.contains('blender') ||
+        appLower.contains('after effects') || appLower.contains('premiere')) {
+      return 'Design';
+    }
+    
+    // Communication Tools
+    if (appLower.contains('slack') || appLower.contains('teams') ||
+        appLower.contains('discord') || appLower.contains('zoom') ||
+        appLower.contains('skype') || appLower.contains('telegram') ||
+        appLower.contains('whatsapp') || appLower.contains('messenger') ||
+        appLower.contains('gmail') || appLower.contains('mail')) {
+      return 'Communication';
+    }
+    
+    // Entertainment - Unproductive
+    if (appLower.contains('youtube') || appLower.contains('netflix') ||
+        appLower.contains('spotify') || appLower.contains('twitch') ||
+        appLower.contains('hulu') || appLower.contains('prime video') ||
+        appLower.contains('vlc') || appLower.contains('media player') ||
+        appLower.contains('steam') || appLower.contains('epic games')) {
+      return 'Entertainment';
+    }
+    
+    // Social Media - Unproductive
+    if (appLower.contains('facebook') || appLower.contains('twitter') ||
+        appLower.contains('instagram') || appLower.contains('tiktok') ||
+        appLower.contains('reddit') || appLower.contains('pinterest') ||
+        appLower.contains('linkedin') && !appLower.contains('job') ||
+        appLower.contains('snapchat')) {
+      return 'Social Media';
+    }
+    
+    // System Utilities
+    if (appLower.contains('explorer') || appLower.contains('finder') ||
+        appLower.contains('terminal') || appLower.contains('powershell') ||
+        appLower.contains('cmd') || appLower.contains('notepad') ||
+        appLower.contains('settings') || appLower.contains('control panel')) {
+      return 'Utilities';
+    }
+    
+    // Browsers (general - check content inside browser for more specific categorization)
+    if (appLower.contains('chrome') || appLower.contains('firefox') ||
+        appLower.contains('edge') || appLower.contains('safari') ||
+        appLower.contains('opera') || appLower.contains('brave')) {
+      return 'Browsing';
+    }
+    
+    // Default to Other
+    return 'Other';
+  }
+
+  // Helper method to calculate categories from app usage data
+  List<Map<String, dynamic>> _calculateCategories(List<dynamic> tasks) {
+    final Map<String, int> categorySeconds = {};
+    
+    // Use app usage data if available
+    if (_appUsageData.isNotEmpty) {
+      for (var usage in _appUsageData) {
+        final appName = usage['app_name'] as String? ?? 'Unknown';
+        final seconds = (usage['duration_seconds'] as int?) ?? 0;
+        
+        if (seconds > 0) {
+          final category = _categorizeApp(appName);
+          
+          final currentSeconds = categorySeconds[category] ?? 0;
+          categorySeconds[category] = currentSeconds + seconds;
+        }
+      }
+    } else {
+      // Fallback to task-based categorization if no app usage data
+      final completedTasks = tasks.where((t) => t.status == 'completed').toList();
+      
+      for (var task in completedTasks) {
+        final category = task.taskName.contains('Design') ? 'Design' :
+                        task.taskName.contains('Dev') || task.taskName.contains('Code') ? 'Development' :
+                        task.taskName.contains('Meet') ? 'Communication' : 'Productivity';
+        
+        final seconds = task.duration.inSeconds.toInt();
+        final currentSeconds = categorySeconds[category] ?? 0;
+        categorySeconds[category] = (currentSeconds + seconds).toInt();
+      }
+    }
+    
+    final totalSeconds = categorySeconds.values.fold<int>(0, (sum, secs) => sum + secs);
+    
+    if (totalSeconds == 0) {
       return [
-        {'name': 'No Data', 'percent': 0, 'duration': '0min', 'color': const Color(0xFF1c4d2c)},
+        {'name': 'No Data', 'percent': 0, 'duration': '0min', 'color': const Color(0xFF666666)},
       ];
     }
     
-    final colors = [
-      const Color(0xFF1c4d2c),
-      const Color(0xFF2d7a47),
-      const Color(0xFF3a9254),
-      const Color(0xFF47aa61),
-    ];
+    // Define colors for each category with semantic meaning
+    final categoryColors = {
+      'Development': const Color(0xFF2196F3),      // Blue - Productive
+      'Productivity': const Color(0xFF4CAF50),     // Green - Productive
+      'Design': const Color(0xFF9C27B0),           // Purple - Creative
+      'Communication': const Color(0xFFFF9800),    // Orange - Collaborative
+      'Entertainment': const Color(0xFFF44336),    // Red - Unproductive
+      'Social Media': const Color(0xFFE91E63),     // Pink - Unproductive
+      'Browsing': const Color(0xFF607D8B),         // Grey - Neutral
+      'Utilities': const Color(0xFF00BCD4),        // Cyan - System
+      'Other': const Color(0xFF9E9E9E),            // Grey - Unknown
+    };
     
-    int colorIndex = 0;
-    return categoryMinutes.entries.map((entry) {
-      final percent = ((entry.value / totalMinutes) * 100).round();
-      final hours = entry.value ~/ 60;
-      final minutes = entry.value % 60;
+    // Sort categories by duration (descending)
+    final sortedEntries = categorySeconds.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    
+    return sortedEntries.map((entry) {
+      final percent = ((entry.value / totalSeconds) * 100).round();
+      final hours = entry.value ~/ 3600;
+      final minutes = (entry.value % 3600) ~/ 60;
       final duration = hours > 0 ? '${hours}h ${minutes}min' : '${minutes}min';
-      final color = colors[colorIndex % colors.length];
-      colorIndex++;
+      final color = categoryColors[entry.key] ?? const Color(0xFF9E9E9E);
       
       return {
         'name': entry.key,
@@ -851,29 +961,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Categories',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: categories.map((cat) => Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: _buildCategoryItem(
-                        percent: cat['percent'] as int,
-                        label: cat['name'] as String,
-                        duration: cat['duration'] as String,
-                        color: cat['color'] as Color,
-                      ),
-                    )).toList(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Categories',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.white70, size: 20),
+                    onPressed: _loadAppUsageData,
+                    tooltip: 'Refresh categories',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: categories.isEmpty || (categories.length == 1 && categories[0]['name'] == 'No Data')
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.pie_chart_outline,
+                            size: 48,
+                            color: Color(0xFF666666),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'No category data yet',
+                            style: TextStyle(
+                              color: Color(0xFFb0b0b0),
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Complete tasks to see categories',
+                            style: TextStyle(
+                              color: Color(0xFF666666),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                        children: categories.map((cat) => Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: _buildCategoryItem(
+                            percent: cat['percent'] as int,
+                            label: cat['name'] as String,
+                            duration: cat['duration'] as String,
+                            color: cat['color'] as Color,
+                          ),
+                        )).toList(),
+                      ),
+                    ),
               ),
             ],
           ),

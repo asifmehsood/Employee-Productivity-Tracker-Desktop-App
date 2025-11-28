@@ -543,12 +543,12 @@ class DatabaseHelper {
     
     final query = '''
       SELECT app_name, 
-             SUM(duration_seconds) as total_duration,
+             SUM(duration_seconds) as duration_seconds,
              COUNT(*) as usage_count
       FROM app_usage
       WHERE timestamp >= ?
       GROUP BY app_name
-      ORDER BY total_duration DESC
+      ORDER BY duration_seconds DESC
       LIMIT ?
     ''';
     
