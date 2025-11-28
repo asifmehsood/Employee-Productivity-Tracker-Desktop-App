@@ -1,5 +1,6 @@
 /// Work Session Model
 /// Represents a daily work session summary for calendar view
+library;
 
 class WorkSessionModel {
   final String id;

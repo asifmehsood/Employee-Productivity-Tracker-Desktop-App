@@ -1,6 +1,7 @@
 /// Auth Provider
 /// Manages employee/user authentication and profile information
 /// Handles login state and employee details
+library;
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';

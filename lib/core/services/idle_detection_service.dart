@@ -1,5 +1,6 @@
 /// Idle Detection Service
 /// Monitors user activity to detect idle state
+library;
 
 import 'dart:async';
 import 'package:uuid/uuid.dart';

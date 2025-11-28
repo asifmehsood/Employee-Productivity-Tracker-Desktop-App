@@ -1,5 +1,6 @@
 /// Employee Model
 /// Represents an employee/user of the productivity tracker
+library;
 
 class EmployeeModel {
   final String id;

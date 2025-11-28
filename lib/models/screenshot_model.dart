@@ -1,6 +1,7 @@
 /// Screenshot Model
 /// Represents a captured screenshot with metadata
 /// Tracks local storage, Azure URL, and sync status
+library;
 
 class ScreenshotModel {
   final String id;

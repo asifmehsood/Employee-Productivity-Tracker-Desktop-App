@@ -1,5 +1,6 @@
 /// File Helper
 /// Utility functions for file operations, path management, and cleanup
+library;
 
 import 'dart:io';
 import 'package:path/path.dart' as path;

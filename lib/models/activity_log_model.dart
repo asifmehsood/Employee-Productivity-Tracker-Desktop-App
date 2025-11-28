@@ -1,5 +1,6 @@
 /// Activity Log Model
 /// Tracks user activity for idle detection
+library;
 
 class ActivityLogModel {
   final String id;

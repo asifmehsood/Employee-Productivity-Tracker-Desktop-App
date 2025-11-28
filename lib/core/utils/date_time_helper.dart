@@ -1,5 +1,6 @@
 /// Date Time Helper
 /// Utility functions for date and time formatting and manipulation
+library;
 
 import 'package:intl/intl.dart';
 

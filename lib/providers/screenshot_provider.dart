@@ -1,5 +1,6 @@
 /// Screenshot Provider
 /// Manages screenshot state, upload operations, and synchronization
+library;
 
 import 'package:flutter/foundation.dart';
 import '../models/screenshot_model.dart';
@@ -15,7 +16,7 @@ class ScreenshotProvider with ChangeNotifier {
 
   List<ScreenshotModel> _screenshots = [];
   bool _isUploading = false;
-  bool _isSyncing = false;
+  final bool _isSyncing = false;
   int _uploadProgress = 0;
 
   // Getters
