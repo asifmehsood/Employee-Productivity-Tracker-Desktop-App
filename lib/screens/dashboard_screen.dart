@@ -241,6 +241,60 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  // Calculate productive/unproductive breakdown from app usage
+  Map<String, int> _calculateProductiveBreakdown() {
+    if (_appUsageData.isEmpty) {
+      return {'productive': 0, 'unproductive': 0};
+    }
+    
+    int productiveSeconds = 0;
+    int unproductiveSeconds = 0;
+    
+    for (var usage in _appUsageData) {
+      final appName = usage['app_name'] as String? ?? 'Unknown';
+      final seconds = (usage['duration_seconds'] as int?) ?? 0;
+      
+      if (seconds > 0) {
+        final category = _categorizeApp(appName);
+        
+        // Categorize as productive or unproductive
+        switch (category) {
+          case 'Development':
+          case 'Productivity':
+          case 'Design':
+            productiveSeconds += seconds;
+            break;
+          case 'Communication':
+            productiveSeconds += (seconds ~/ 2); // 50% productive
+            unproductiveSeconds += (seconds ~/ 2); // 50% break/social
+            break;
+          case 'Browsing':
+            productiveSeconds += (seconds ~/ 3); // 33% productive
+            unproductiveSeconds += (seconds * 2 ~/ 3); // 67% unproductive
+            break;
+          case 'Utilities':
+            productiveSeconds += (seconds ~/ 2); // 50% productive
+            unproductiveSeconds += (seconds ~/ 2);
+            break;
+          case 'Entertainment':
+          case 'Social Media':
+            unproductiveSeconds += seconds; // 100% unproductive
+            break;
+          default:
+            // Unknown/Other - split evenly
+            productiveSeconds += (seconds ~/ 2);
+            unproductiveSeconds += (seconds ~/ 2);
+            break;
+        }
+      }
+    }
+    
+    return {
+      'productive': (productiveSeconds / 60).round(),
+      'unproductive': (unproductiveSeconds / 60).round(),
+    };
+  }
+
   // Calculate productivity score from app usage categories
   int _calculateProductivityScore() {
     if (_appUsageData.isEmpty) return 0;
@@ -760,14 +814,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildDailySummaryCard(TaskProvider taskProvider) {
-    final filteredTasks = _getFilteredTasks(taskProvider);
-    final completedTasks = filteredTasks.where((t) => t.status == 'completed').toList();
-    final totalMinutes = completedTasks.fold<int>(0, (sum, task) => (sum + task.duration.inMinutes.toInt()) as int);
-    
-    // Productive: focus time (50%)
-    // Unproductive: meetings + breaks (50%)
-    final productiveMinutes = (totalMinutes * 0.5).toInt();
-    final unproductiveMinutes = (totalMinutes * 0.5).toInt();
+    // Use real app usage data for productive/unproductive breakdown
+    final breakdown = _calculateProductiveBreakdown();
+    final productiveMinutes = breakdown['productive']!;
+    final unproductiveMinutes = breakdown['unproductive']!;
 
     return _AnimatedHoverCard(
       child: Card(
