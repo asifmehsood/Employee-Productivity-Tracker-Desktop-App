@@ -143,6 +143,7 @@ class _TaskListScreenState extends State<TaskListScreen> with SingleTickerProvid
                             itemBuilder: (context) => [
                               _buildMenuItem('all', 'All Tasks', Icons.list),
                               _buildMenuItem('active', 'Active', Icons.play_circle),
+                              _buildMenuItem('scheduled', 'Scheduled', Icons.schedule),
                               _buildMenuItem('paused', 'Paused', Icons.pause_circle),
                               _buildMenuItem('completed', 'Completed', Icons.check_circle),
                             ],
@@ -255,6 +256,8 @@ class _TaskListScreenState extends State<TaskListScreen> with SingleTickerProvid
     switch (filter) {
       case 'active':
         return Icons.play_circle;
+      case 'scheduled':
+        return Icons.schedule;
       case 'paused':
         return Icons.pause_circle;
       case 'completed':
@@ -268,6 +271,8 @@ class _TaskListScreenState extends State<TaskListScreen> with SingleTickerProvid
     switch (filter) {
       case 'active':
         return 'Active';
+      case 'scheduled':
+        return 'Scheduled';
       case 'paused':
         return 'Paused';
       case 'completed':
@@ -281,6 +286,9 @@ class _TaskListScreenState extends State<TaskListScreen> with SingleTickerProvid
     switch (_filter) {
       case 'active':
         return provider.activeTasks;
+      case 'scheduled':
+        final now = DateTime.now();
+        return provider.tasks.where((t) => t.isActive && t.startTime.isAfter(now)).toList();
       case 'paused':
         return provider.pausedTasks;
       case 'completed':
