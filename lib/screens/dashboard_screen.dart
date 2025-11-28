@@ -241,6 +241,59 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  // Calculate productivity score from app usage categories
+  int _calculateProductivityScore() {
+    if (_appUsageData.isEmpty) return 0;
+    
+    final Map<String, int> categorySeconds = {};
+    
+    for (var usage in _appUsageData) {
+      final appName = usage['app_name'] as String? ?? 'Unknown';
+      final seconds = (usage['duration_seconds'] as int?) ?? 0;
+      
+      if (seconds > 0) {
+        final category = _categorizeApp(appName);
+        final currentSeconds = categorySeconds[category] ?? 0;
+        categorySeconds[category] = currentSeconds + seconds;
+      }
+    }
+    
+    final totalSeconds = categorySeconds.values.fold<int>(0, (sum, secs) => sum + secs);
+    if (totalSeconds == 0) return 0;
+    
+    // Calculate weighted score
+    int productiveSeconds = 0;
+    int collaborativeSeconds = 0;
+    int neutralSeconds = 0;
+    
+    categorySeconds.forEach((category, seconds) {
+      switch (category) {
+        case 'Development':
+        case 'Productivity':
+        case 'Design':
+          productiveSeconds += seconds;
+          break;
+        case 'Communication':
+          collaborativeSeconds += seconds;
+          break;
+        case 'Browsing':
+          collaborativeSeconds += (seconds ~/ 2); // 50% weight
+          neutralSeconds += (seconds ~/ 2);
+          break;
+        case 'Utilities':
+          neutralSeconds += seconds;
+          break;
+        // Entertainment and Social Media = 0 points (unproductive)
+        default:
+          break;
+      }
+    });
+    
+    // Score formula: (Productive*100 + Collaborative*50 + Neutral*25) / Total
+    final weightedScore = (productiveSeconds * 100 + collaborativeSeconds * 50 + neutralSeconds * 25) / totalSeconds;
+    return weightedScore.round().clamp(0, 100);
+  }
+
   // Helper method to categorize application names
   String _categorizeApp(String appName) {
     final appLower = appName.toLowerCase();
@@ -785,10 +838,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ? (totalDuration / completedTasksList.length).toInt()
         : 0;
     
-    // Calculate productivity score
-    final productivityScore = totalTasks > 0 
-        ? ((completedTasks / totalTasks) * 100).toInt() 
-        : 0;
+    // Calculate productivity score from app usage (real-time)
+    final productivityScore = _calculateProductivityScore();
 
     return _AnimatedHoverCard(
       child: Card(
@@ -830,53 +881,56 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Center(
                 child: Column(
                   children: [
-                    _HoverGlowBox(
-                      glowColor: productivityScore >= 80
-                          ? const Color(0xFF3fd884)
-                          : productivityScore >= 50
-                              ? const Color(0xFFf39c12)
-                              : const Color(0xFFe74c3c),
-                      child: SizedBox(
-                        width: 100,
-                        height: 100,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            CircularProgressIndicator(
-                              value: productivityScore / 100,
-                              strokeWidth: 8,
-                              backgroundColor: const Color(0xFF2a2a2a),
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                productivityScore >= 80
-                                    ? const Color(0xFF1c4d2c)
-                                    : productivityScore >= 50
-                                        ? const Color(0xFFf39c12)
-                                        : const Color(0xFFe74c3c),
+                    Tooltip(
+                      message: 'Based on app usage:\nProductive: 100% | Collaborative: 50% | Neutral: 25%',
+                      child: _HoverGlowBox(
+                        glowColor: productivityScore >= 80
+                            ? const Color(0xFF3fd884)
+                            : productivityScore >= 50
+                                ? const Color(0xFFf39c12)
+                                : const Color(0xFFe74c3c),
+                        child: SizedBox(
+                          width: 100,
+                          height: 100,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              CircularProgressIndicator(
+                                value: productivityScore / 100,
+                                strokeWidth: 8,
+                                backgroundColor: const Color(0xFF2a2a2a),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  productivityScore >= 80
+                                      ? const Color(0xFF1c4d2c)
+                                      : productivityScore >= 50
+                                          ? const Color(0xFFf39c12)
+                                          : const Color(0xFFe74c3c),
+                                ),
                               ),
-                            ),
-                            Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '$productivityScore%',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
+                              Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      '$productivityScore%',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    'Score',
-                                    style: TextStyle(
-                                      color: Colors.grey[500],
-                                      fontSize: 12,
+                                    Text(
+                                      'Score',
+                                      style: TextStyle(
+                                        color: Colors.grey[500],
+                                        fontSize: 12,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
