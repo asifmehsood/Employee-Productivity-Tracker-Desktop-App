@@ -89,20 +89,6 @@ class TaskProvider with ChangeNotifier {
       print('Scheduled Start Time: $scheduledStartTime');
       print('Scheduled End Time: $scheduledEndTime');
       print('Current Time: ${DateTime.now()}');
-      
-      // Stop any currently active task only if it has actually started
-      if (_activeTask != null) {
-        final now = DateTime.now();
-        // Only stop if the task has actually started (start time is not in the future)
-        if (!_activeTask!.startTime.isAfter(now)) {
-          print('Stopping previous active task: ${_activeTask!.taskName}');
-          await stopTask(_activeTask!.id);
-        } else {
-          print('Previous task is scheduled for future, not stopping it: ${_activeTask!.taskName}');
-          // Just clear the active task reference since it hasn't started
-          _activeTask = null;
-        }
-      }
 
       // Use scheduled start time or current time
       final actualStartTime = scheduledStartTime ?? DateTime.now();
@@ -516,6 +502,31 @@ class TaskProvider with ChangeNotifier {
 
   /// Get timer service for access to timer info
   TimerService get timerService => _timerService;
+  
+  /// Check if a time slot conflicts with existing tasks
+  /// Returns the conflicting task if there's a conflict, null otherwise
+  TaskModel? checkTimeConflict(DateTime startTime, DateTime endTime) {
+    for (var task in _tasks) {
+      // Skip completed tasks
+      if (task.isCompleted) continue;
+      
+      // Get the task's time range
+      final taskStart = task.startTime;
+      final taskEnd = task.scheduledEndTime ?? task.endTime;
+      
+      // Skip if task doesn't have an end time
+      if (taskEnd == null) continue;
+      
+      // Check for overlap:
+      // New task starts before existing task ends AND new task ends after existing task starts
+      final hasOverlap = startTime.isBefore(taskEnd) && endTime.isAfter(taskStart);
+      
+      if (hasOverlap) {
+        return task; // Return the conflicting task
+      }
+    }
+    return null; // No conflict
+  }
   
   /// Get work session data for a specific date
   Future<Map<String, dynamic>> getWorkSessionForDate(DateTime date) async {
