@@ -224,7 +224,7 @@ class _CalendarViewState extends State<CalendarView> with SingleTickerProviderSt
           builder: (context, snapshot) {
             final workMinutes = snapshot.data?['totalMinutes'] ?? 0;
             final hasWork = workMinutes > 0;
-            final hoursWorked = workMinutes / 60.0;
+            // final hoursWorked = workMinutes / 60.0;
             
             return MouseRegion(
               onEnter: (_) => setState(() => _hoveredDay = day),

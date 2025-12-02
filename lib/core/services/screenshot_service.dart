@@ -24,26 +24,12 @@ class ScreenshotService {
       final fileName = '$screenshotId.${AppConstants.screenshotFormat}';
       final filePath = await FileHelper.getScreenshotPath(fileName);
 
-      // Capture the screenshot with retry mechanism
-      CapturedData? capturedData;
-      int retries = 2;
-      
-      for (int i = 0; i < retries; i++) {
-        capturedData = await _screenCapturer.capture(
-          mode: CaptureMode.screen,
-          imagePath: filePath,
-          silent: true, // Capture silently without notification
-        );
-        
-        if (capturedData != null && capturedData.imagePath != null) {
-          break;
-        }
-        
-        // Wait a bit before retry
-        if (i < retries - 1) {
-          await Future.delayed(const Duration(milliseconds: 500));
-        }
-      }
+      // Capture the screenshot (single attempt - no retry to avoid duplicates)
+      final capturedData = await _screenCapturer.capture(
+        mode: CaptureMode.screen,
+        imagePath: filePath,
+        silent: true, // Capture silently without notification
+      );
 
       if (capturedData != null && capturedData.imagePath != null) {
         // Create screenshot model
@@ -61,7 +47,7 @@ class ScreenshotService {
         return screenshot;
       }
 
-      print('Screenshot capture failed - no data returned after retries');
+      print('Screenshot capture failed - no data returned');
       return null;
     } catch (e) {
       print('Error capturing screenshot: $e');

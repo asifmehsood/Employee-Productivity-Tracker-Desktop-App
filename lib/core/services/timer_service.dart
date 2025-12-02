@@ -21,6 +21,11 @@ class TimerService {
   DateTime? _idleStartTime;
   int _intervalMinutes = AppConstants.defaultScreenshotIntervalMinutes;
   String? _activeTaskId;
+  
+  // Track elapsed time for screenshot alignment
+  int _elapsedSeconds = 0;
+  int _lastScreenshotAtSecond = 0;
+  bool _isCapturingScreenshot = false;
 
   // Callback for idle state changes
   Function(bool isIdle)? onIdleStateChanged;
@@ -111,67 +116,44 @@ class TimerService {
       onActiveCallback: () => _handleActive(),
     );
 
-    // If resuming from pause, only start periodic timer (no immediate screenshot)
-    if (isResuming) {
-      print(
-        'Resuming task - starting periodic timer only (no immediate screenshot)',
-      );
-      _timer = Timer.periodic(Duration(minutes: _intervalMinutes), (
-        timer,
-      ) async {
-        await _captureScreenshot();
-      });
-      print('Periodic timer started (Interval: $_intervalMinutes minutes)');
-      print('Timer resumed for task: $taskId');
-      return;
-    }
-
     print('Timer starting for task: $taskId');
-    print('Current time: ${DateTime.now()}');
-    print('Task start time: ${task.startTime}');
+    print('Current elapsed seconds: $_elapsedSeconds');
+    print('Last screenshot was at: $_lastScreenshotAtSecond seconds');
 
-    // Check if task start time is in the future
-    final now = DateTime.now();
-    if (task.startTime.isAfter(now)) {
-      final delay = task.startTime.difference(now);
-      print(
-        'Task starts in the future. Waiting ${delay.inMinutes} minutes ${delay.inSeconds % 60} seconds before first screenshot',
-      );
+    // Take IMMEDIATE screenshot on start (first screenshot)
+    print('\n=== TAKING IMMEDIATE SCREENSHOT ON START ===');
+    await _captureScreenshot();
+    _lastScreenshotAtSecond = _elapsedSeconds;
+    print('Screenshot #1 captured immediately at start');
+    print('Next screenshot at: 60 seconds active time');
+    print('=== IMMEDIATE SCREENSHOT COMPLETE ===\n');
 
-      // Schedule first screenshot at task start time
-      Future.delayed(delay, () async {
-        if (_isRunning && _activeTaskId == taskId) {
-          print('\n=== SCHEDULED TASK START - Taking first screenshot ===');
-          await _captureScreenshot();
-
-          // Start periodic timer after first screenshot
-          _timer = Timer.periodic(Duration(minutes: _intervalMinutes), (
-            timer,
-          ) async {
-            await _captureScreenshot();
-          });
-          print(
-            'Periodic timer started after delayed first screenshot (Interval: $_intervalMinutes minutes)',
-          );
-        }
-      });
-    } else {
-      // Task starts now or in the past, take screenshot immediately
-      print(
-        'Task start time is now or in the past. Taking first screenshot immediately.',
-      );
-      await _captureScreenshot();
-
-      // Start periodic timer for subsequent screenshots
-      _timer = Timer.periodic(Duration(minutes: _intervalMinutes), (
-        timer,
-      ) async {
+    // Start tick timer (1 second intervals)
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      // Get current task to check active duration (excludes paused time)
+      final currentTask = await DatabaseHelper.instance.getTaskById(taskId);
+      if (currentTask == null || !currentTask.isActive) {
+        return;
+      }
+      
+      // Calculate active seconds (excludes paused time)
+      final activeSeconds = currentTask.activeDuration.inSeconds;
+      
+      // Check if we've passed the interval since last screenshot (based on ACTIVE time)
+      final intervalSeconds = _intervalMinutes * 60;
+      final secondsSinceLastScreenshot = activeSeconds - _lastScreenshotAtSecond;
+      
+      if (secondsSinceLastScreenshot >= intervalSeconds) {
+        print('\n=== TIME FOR SCREENSHOT (60 ACTIVE SECONDS PASSED) ===');
+        print('Active time now: $activeSeconds seconds (${(activeSeconds / 60).toInt()}:${(activeSeconds % 60).toString().padLeft(2, '0')})');
+        print('Last screenshot at: $_lastScreenshotAtSecond seconds');
+        print('Active seconds since last screenshot: $secondsSinceLastScreenshot');
         await _captureScreenshot();
-      });
-      print(
-        'Periodic timer started after immediate first screenshot (Interval: $_intervalMinutes minutes)',
-      );
-    }
+        _lastScreenshotAtSecond = activeSeconds;
+        print('Next screenshot when active time reaches: ${_lastScreenshotAtSecond + intervalSeconds} seconds');
+        print('=== SCREENSHOT COMPLETE ===\n');
+      }
+    });
 
     print('Timer started for task: $taskId');
   }
@@ -188,6 +170,10 @@ class TimerService {
     _isRunning = false;
     _isPausedDueToIdle = false;
     _idleStartTime = null;
+    
+    // Reset elapsed time counters
+    _elapsedSeconds = 0;
+    _lastScreenshotAtSecond = 0;
 
     // Stop window tracking
     await _windowTracker.stopTracking();
@@ -197,49 +183,121 @@ class TimerService {
 
     _activeTaskId = null;
 
-    print('Timer stopped');
+    print('Timer stopped and counters reset');
   }
 
-  /// Pause the timer (stops capturing but keeps timer active)
+  /// Pause the timer (stops capturing but keeps elapsed time)
   Future<void> pause() async {
     if (_timer != null) {
       _timer!.cancel();
       _timer = null;
     }
     _isRunning = false;
-    print('Timer paused');
+    print('Timer paused at $_elapsedSeconds seconds');
+    print('Elapsed time preserved for proper screenshot timing on resume');
   }
 
-  /// Resume the timer (restarts capturing)
+  /// Resume the timer (restarts capturing with immediate screenshot)
   Future<void> resume(String taskId) async {
-    await start(taskId);
-    print('Timer resumed');
+    if (_isRunning) {
+      print('Timer already running');
+      return;
+    }
+
+    // Verify task exists and is active
+    final task = await DatabaseHelper.instance.getTaskById(taskId);
+    if (task == null || !task.isActive) {
+      print('Cannot resume timer: Task not found or not active');
+      return;
+    }
+
+    _activeTaskId = taskId;
+    _isRunning = true;
+    _isPausedDueToIdle = false;
+    _idleStartTime = null;
+
+    // Start window tracking
+    await _windowTracker.startTracking(taskId);
+
+    // Start idle detection
+    _idleDetector.startMonitoring(
+      onIdleCallback: () => _handleIdle(),
+      onActiveCallback: () => _handleActive(),
+    );
+
+    print('\n=== RESUMING TIMER ===');
+    print('Resuming at $_elapsedSeconds seconds');
+    print('Last screenshot was at: $_lastScreenshotAtSecond seconds');
+
+    // Don't take screenshot on resume - only when 60 active seconds pass
+    print('Timer resumed - next screenshot when 60 active seconds pass since last screenshot');
+
+    // Start tick timer (1 second intervals)
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      // Get current task to check active duration (excludes paused time)
+      final currentTask = await DatabaseHelper.instance.getTaskById(taskId);
+      if (currentTask == null || !currentTask.isActive) {
+        return;
+      }
+      
+      // Calculate active seconds (excludes paused time)
+      final activeSeconds = currentTask.activeDuration.inSeconds;
+      
+      // Check if we've passed the interval since last screenshot (based on ACTIVE time)
+      final intervalSeconds = _intervalMinutes * 60;
+      final secondsSinceLastScreenshot = activeSeconds - _lastScreenshotAtSecond;
+      
+      if (secondsSinceLastScreenshot >= intervalSeconds) {
+        print('\n=== TIME FOR SCREENSHOT (60 ACTIVE SECONDS PASSED) ===');
+        print('Active time now: $activeSeconds seconds (${(activeSeconds / 60).toInt()}:${(activeSeconds % 60).toString().padLeft(2, '0')})');
+        print('Last screenshot at: $_lastScreenshotAtSecond seconds');
+        print('Active seconds since last screenshot: $secondsSinceLastScreenshot');
+        await _captureScreenshot();
+        _lastScreenshotAtSecond = activeSeconds;
+        print('Next screenshot when active time reaches: ${_lastScreenshotAtSecond + intervalSeconds} seconds');
+        print('=== SCREENSHOT COMPLETE ===\n');
+      }
+    });
+
+    print('Timer resumed successfully');
+    print('=== RESUME COMPLETE ===\n');
   }
 
   /// Capture a screenshot for the active task
   Future<void> _captureScreenshot() async {
+    // Prevent duplicate captures
+    if (_isCapturingScreenshot) {
+      print('Screenshot capture already in progress, skipping duplicate');
+      return;
+    }
+
     if (_activeTaskId == null) {
       print('No active task for screenshot');
       return;
     }
 
-    // Verify task is still active
-    final task = await DatabaseHelper.instance.getTaskById(_activeTaskId!);
-    if (task == null || !task.isActive) {
-      print('Task no longer active, stopping timer');
-      await stop();
-      return;
-    }
+    _isCapturingScreenshot = true;
+    try {
+      // Verify task is still active
+      final task = await DatabaseHelper.instance.getTaskById(_activeTaskId!);
+      if (task == null || !task.isActive) {
+        print('Task no longer active, stopping timer');
+        await stop();
+        return;
+      }
 
-    print('Capturing screenshot for task: $_activeTaskId');
-    final screenshot = await _screenshotService.captureScreenshot(
-      _activeTaskId!,
-    );
+      print('Capturing screenshot for task: $_activeTaskId');
+      final screenshot = await _screenshotService.captureScreenshot(
+        _activeTaskId!,
+      );
 
-    if (screenshot != null) {
-      print('Screenshot captured successfully: ${screenshot.id}');
-    } else {
-      print('Failed to capture screenshot');
+      if (screenshot != null) {
+        print('Screenshot captured successfully: ${screenshot.id}');
+      } else {
+        print('Failed to capture screenshot');
+      }
+    } finally {
+      _isCapturingScreenshot = false;
     }
   }
 
@@ -280,19 +338,20 @@ class TimerService {
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
-  /// Handle idle state - pause timer
+  /// Handle idle state - pause timer but keep elapsed time
   void _handleIdle() {
     if (_isRunning && !_isPausedDueToIdle) {
       print('User went idle - pausing timer and window tracking');
       _isPausedDueToIdle = true;
       _idleStartTime = DateTime.now();
       print('Idle start time recorded: $_idleStartTime');
+      print('Elapsed time at idle: $_elapsedSeconds seconds (preserved)');
 
-      // Cancel the periodic screenshot timer to prevent screenshots during idle
+      // Cancel the tick timer to prevent screenshots during idle
       if (_timer != null) {
         _timer!.cancel();
         _timer = null;
-        print('Screenshot timer paused (no screenshots during idle)');
+        print('Timer paused (no screenshots during idle)');
       }
 
       // Pause window tracking
@@ -303,10 +362,12 @@ class TimerService {
     }
   }
 
-  /// Handle active state - resume timer
+  /// Handle active state - resume timer with immediate screenshot
   void _handleActive() {
     if (_isRunning && _isPausedDueToIdle && _activeTaskId != null) {
-      print('User is active again - resuming timer and window tracking');
+      print('\n=== USER ACTIVE AGAIN ===');
+      print('Resuming timer and window tracking');
+      print('Elapsed time before idle: $_elapsedSeconds seconds');
 
       // Calculate idle duration
       if (_idleStartTime != null) {
@@ -323,14 +384,40 @@ class TimerService {
       _isPausedDueToIdle = false;
       _idleStartTime = null;
 
-      // Resume periodic screenshot timer
+      print('Resuming at $_elapsedSeconds seconds');
+      print('Last screenshot was at: $_lastScreenshotAtSecond seconds');
+      print('Next screenshot will be at next minute mark');
+
+      // Don't take screenshot on idle resume - only at minute marks
+
+      // Resume tick timer
       if (_timer == null) {
-        _timer = Timer.periodic(Duration(minutes: _intervalMinutes), (
-          timer,
-        ) async {
-          await _captureScreenshot();
+        _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+          // Get current task to check active duration (excludes paused time)
+          final currentTask = await DatabaseHelper.instance.getTaskById(_activeTaskId!);
+          if (currentTask == null || !currentTask.isActive) {
+            return;
+          }
+          
+          // Calculate active seconds (excludes paused time)
+          final activeSeconds = currentTask.activeDuration.inSeconds;
+          
+          // Check if we've passed the interval since last screenshot (based on ACTIVE time)
+          final intervalSeconds = _intervalMinutes * 60;
+          final secondsSinceLastScreenshot = activeSeconds - _lastScreenshotAtSecond;
+          
+          if (secondsSinceLastScreenshot >= intervalSeconds) {
+            print('\n=== TIME FOR SCREENSHOT (60 ACTIVE SECONDS PASSED) ===');
+            print('Active time now: $activeSeconds seconds (${(activeSeconds / 60).toInt()}:${(activeSeconds % 60).toString().padLeft(2, '0')})');
+            print('Last screenshot at: $_lastScreenshotAtSecond seconds');
+            print('Active seconds since last screenshot: $secondsSinceLastScreenshot');
+            await _captureScreenshot();
+            _lastScreenshotAtSecond = activeSeconds;
+            print('Next screenshot when active time reaches: ${_lastScreenshotAtSecond + intervalSeconds} seconds');
+            print('=== SCREENSHOT COMPLETE ===\n');
+          }
         });
-        print('Screenshot timer resumed (Interval: $_intervalMinutes minutes)');
+        print('Timer resumed (Interval: $_intervalMinutes minutes)');
       }
 
       // Resume window tracking
@@ -338,6 +425,8 @@ class TimerService {
 
       // Notify listeners about active state
       onIdleStateChanged?.call(false);
+      
+      print('=== IDLE RESUME COMPLETE ===\n');
     }
   }
 
@@ -360,6 +449,9 @@ class TimerService {
     _isPausedDueToIdle = false;
     _idleStartTime = null;
     _activeTaskId = null;
+    _elapsedSeconds = 0;
+    _lastScreenshotAtSecond = 0;
+    _isCapturingScreenshot = false;
     _idleDetector.stopMonitoring();
   }
 }

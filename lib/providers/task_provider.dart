@@ -22,6 +22,7 @@ class TaskProvider with ChangeNotifier {
   bool _isIdlePaused = false;
   DateTime? _idlePausedAt;
   Timer? _autoStopTimer;
+  // ignore: unused_field
   DateTime? _scheduledEndTime;
 
   // Callback for showing notifications
@@ -49,18 +50,26 @@ class TaskProvider with ChangeNotifier {
     _timerService.onIdleStateChanged = (isIdle) {
       _isIdlePaused = isIdle;
       if (isIdle) {
-        // Record when idle pause started (like manual pause)
+        // Record when idle pause started and update task's pausedAt field
         _idlePausedAt = DateTime.now();
         print('User went idle at: $_idlePausedAt');
         print('Timer paused (UI will stop), but auto-stop will continue');
+        
+        // Update the active task's pausedAt field so UI can calculate correctly
+        if (_activeTask != null) {
+          _activeTask = _activeTask!.copyWith(pausedAt: _idlePausedAt);
+        }
 
         onShowNotification?.call(
           'You\'ve been idle for 1 minute. Timer paused automatically.',
           isWarning: true,
         );
       } else {
-        // Clear idle pause time when resuming
+        // Clear idle pause time and pausedAt when resuming
         _idlePausedAt = null;
+        if (_activeTask != null) {
+          _activeTask = _activeTask!.copyWith(pausedAt: null);
+        }
         print('User active again - timer resumed');
 
         onShowNotification?.call(
@@ -597,9 +606,9 @@ class TaskProvider with ChangeNotifier {
 
       _activeTask = updatedTask;
 
-      // Restart the timer service (pass isResuming to skip immediate screenshot)
-      await _timerService.start(taskId, isResuming: true);
-      print('Timer service restarted');
+      // Restart the timer service (will capture screenshot immediately on resume)
+      await _timerService.resume(taskId);
+      print('Timer service resumed');
 
       // Reschedule auto-stop if there's a scheduled end time
       if (task.scheduledEndTime != null) {

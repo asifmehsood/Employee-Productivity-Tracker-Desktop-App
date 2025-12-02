@@ -63,6 +63,7 @@ class DatabaseHelper {
         scheduled_start_time INTEGER,
         scheduled_end_time INTEGER,
         created_at INTEGER NOT NULL,
+        updated_at INTEGER,
         synced_to_odoo INTEGER DEFAULT 0
       )
     ''');
@@ -170,6 +171,11 @@ class DatabaseHelper {
       ''');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_app_usage_task ON app_usage(task_id)');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_app_usage_app ON app_usage(app_name)');
+    }
+    
+    if (oldVersion < 6) {
+      // Add updated_at column to tasks table
+      await db.execute('ALTER TABLE tasks ADD COLUMN updated_at INTEGER');
     }
   }
 

@@ -8,7 +8,6 @@ import '../providers/task_provider.dart';
 import '../providers/auth_provider.dart';
 import '../core/utils/date_time_helper.dart';
 import '../core/constants/app_constants.dart';
-import 'task_detail_screen.dart';
 import 'common/app_drawer.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -107,10 +106,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     taskProvider.hasActiveTask
                         ? _buildActiveTaskSection(taskProvider)
                         : _buildNoActiveTaskSection(context, authProvider),
-
-                    // Statistics
-                    const SizedBox(height: 24),
-                    _buildStatistics(taskProvider),
                   ],
                 ),
               );
@@ -187,10 +182,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (currentTask == null) {
                   return const Text('No active task');
                 }
-                // Pass idlePausedAt to getDuration so timer stops during idle
-                final duration = currentTask.getDuration(
-                  idlePausedAt: taskProvider.idlePausedAt,
-                );
+                // Get ACTIVE duration (excludes paused time, including current pause)
+                final duration = currentTask.activeDuration;
                 final totalHours = duration.inHours;
                 final minutes = duration.inMinutes.remainder(60);
                 final seconds = duration.inSeconds.remainder(60);
@@ -493,103 +486,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildStatistics(TaskProvider taskProvider) {
-    return StreamBuilder(
-      stream: Stream.periodic(const Duration(seconds: 1)),
-      builder: (context, snapshot) {
-        // Watch for real-time updates
-        final provider = context.watch<TaskProvider>();
-
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [const Color(0xFF1a1a1a), const Color(0xFF0d0d0d)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFF1c4d2c).withOpacity(0.3),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF1c4d2c).withOpacity(0.1),
-                blurRadius: 20,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatItem(
-                'Total Tasks',
-                provider.tasks.length.toString(),
-                Icons.format_list_bulleted_rounded,
-                color: const Color(0xFF6dd4a8),
-                bgColor: const Color(0xFF1c4d2c).withOpacity(0.2),
-              ),
-              _buildVerticalDivider(),
-              _buildStatItem(
-                'Active',
-                provider.runningTasks.length.toString(),
-                Icons.play_circle_outline_rounded,
-                color: const Color(0xFF3fd884),
-                bgColor: const Color(0xFF3fd884).withOpacity(0.2),
-              ),
-              _buildVerticalDivider(),
-              _buildStatItem(
-                'Completed',
-                provider.completedTasks.length.toString(),
-                Icons.check_circle_outline_rounded,
-                color: const Color(0xFF5ba3ff),
-                bgColor: const Color(0xFF5ba3ff).withOpacity(0.2),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildVerticalDivider() {
-    return Container(
-      height: 50,
-      width: 1,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.transparent,
-            const Color(0xFF1c4d2c).withOpacity(0.3),
-            Colors.transparent,
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(
-    String label,
-    String value,
-    IconData icon, {
-    required Color color,
-    required Color bgColor,
-  }) {
-    return Expanded(
-      child: _StatCard(
-        label: label,
-        value: value,
-        icon: icon,
-        color: color,
-        bgColor: bgColor,
-      ),
-    );
-  }
-
   Future<void> _startWorkSession(BuildContext context, AuthProvider authProvider) async {
     final taskProvider = Provider.of<TaskProvider>(context, listen: false);
     
@@ -707,136 +603,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (confirmed == true) {
       await taskProvider.stopTask(taskId);
     }
-  }
-}
-
-class _StatCard extends StatefulWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final Color bgColor;
-
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-    required this.bgColor,
-  });
-
-  @override
-  State<_StatCard> createState() => _StatCardState();
-}
-
-class _StatCardState extends State<_StatCard>
-    with SingleTickerProviderStateMixin {
-  bool _isHovered = false;
-  late AnimationController _animationController;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) {
-        setState(() => _isHovered = true);
-        _animationController.forward();
-      },
-      onExit: (_) {
-        setState(() => _isHovered = false);
-        _animationController.reverse();
-      },
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-          decoration: BoxDecoration(
-            color: _isHovered ? widget.bgColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _isHovered
-                  ? widget.color.withOpacity(0.3)
-                  : Colors.transparent,
-              width: 1,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      widget.color.withOpacity(0.3),
-                      widget.color.withOpacity(0.1),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: _isHovered
-                      ? [
-                          BoxShadow(
-                            color: widget.color.withOpacity(0.3),
-                            blurRadius: 15,
-                            spreadRadius: 2,
-                          ),
-                        ]
-                      : [],
-                ),
-                child: Icon(widget.icon, color: widget.color, size: 24),
-              ),
-              const SizedBox(height: 10),
-              TweenAnimationBuilder<double>(
-                duration: const Duration(milliseconds: 500),
-                tween: Tween(begin: 0, end: double.parse(widget.value)),
-                builder: (context, value, child) {
-                  return Text(
-                    value.toInt().toString(),
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: widget.color,
-                      height: 1,
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[500],
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 

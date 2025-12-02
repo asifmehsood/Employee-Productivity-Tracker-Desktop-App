@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
 import '../models/task_model.dart';
 import '../core/utils/date_time_helper.dart';
-import 'task_detail_screen.dart';
+// import 'task_detail_screen.dart'; // Removed - using work sessions only
 import 'common/app_drawer.dart';
 
 class TaskListScreen extends StatefulWidget {
@@ -340,12 +340,13 @@ class _TaskListScreenState extends State<TaskListScreen> with SingleTickerProvid
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TaskDetailScreen(task: task),
-                ),
-              );
+              // Navigation to detail screen removed - using work sessions only
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(
+              //     builder: (context) => TaskDetailScreen(task: task),
+              //   ),
+              // );
             },
             borderRadius: BorderRadius.circular(16),
             splashColor: const Color(0xFF3fd884).withOpacity(0.1),

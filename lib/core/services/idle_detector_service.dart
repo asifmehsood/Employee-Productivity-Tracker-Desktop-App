@@ -24,7 +24,7 @@ class IdleDetectorService {
 
   // Configuration
   final Duration idleThreshold = const Duration(minutes: 1);
-  final Duration checkInterval = const Duration(seconds: 5);
+  final Duration checkInterval = const Duration(seconds: 1);
 
   /// Check if user is currently idle
   bool get isIdle => _isIdle;
@@ -55,12 +55,12 @@ class IdleDetectorService {
     _lastActivityTime = DateTime.now();
     _monitoringStartTime = DateTime.now(); // Record when monitoring started
 
-    // Check for activity every 5 seconds
+    // Check for activity every 1 second for precise idle detection
     _checkTimer = Timer.periodic(checkInterval, (timer) {
       _checkActivity();
     });
 
-    print('Idle monitoring started (threshold: ${idleThreshold.inSeconds}s)');
+    print('Idle monitoring started (threshold: ${idleThreshold.inSeconds}s, check every ${checkInterval.inSeconds}s)');
     print('Monitoring start time: $_monitoringStartTime');
     print('=== IDLE MONITORING STARTED ===\n');
   }

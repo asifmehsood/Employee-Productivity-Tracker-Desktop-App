@@ -21,7 +21,7 @@ class AppConstants {
   
   // Database
   static const String databaseName = 'productivity_tracker.db';
-  static const int databaseVersion = 5;
+  static const int databaseVersion = 6;
   
   // Task Status
   static const String taskStatusActive = 'active';

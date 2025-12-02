@@ -874,7 +874,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }  Widget _buildQuickInsightsCard(TaskProvider taskProvider) {
     final filteredTasks = _getFilteredTasks(taskProvider);
-    final totalTasks = filteredTasks.length;
+    // final totalTasks = filteredTasks.length;
     final completedTasks = filteredTasks.where((t) => t.status == 'completed').length;
     final activeTasks = taskProvider.runningTasks.length;
     
