@@ -15,10 +15,10 @@ class TaskModel {
   final DateTime? pausedAt; // When the task was paused
   final int totalPausedDuration; // Total paused duration in milliseconds
   final DateTime? scheduledStartTime; // Scheduled start time from user
-  final DateTime? scheduledEndTime;   // Scheduled end time from user
+  final DateTime? scheduledEndTime; // Scheduled end time from user
   final DateTime createdAt;
   final bool syncedToOdoo;
-  
+
   TaskModel({
     required this.id,
     required this.employeeId,
@@ -35,57 +35,69 @@ class TaskModel {
     required this.createdAt,
     this.syncedToOdoo = false,
   });
-  
+
   // Calculate duration
-  Duration get duration {
+  // Pass idlePausedAt from TaskProvider to handle idle pause
+  Duration getDuration({DateTime? idlePausedAt}) {
     final now = DateTime.now();
     final end = endTime ?? now;
-    
+
     // If task hasn't started yet (scheduled for future), return zero duration
     if (startTime.isAfter(now)) {
       return Duration.zero;
     }
-    
+
     var calculatedDuration = end.difference(startTime);
-    
+
     // Subtract total paused duration
-    calculatedDuration = calculatedDuration - Duration(milliseconds: totalPausedDuration);
-    
-    // If currently paused, don't include current pause time
+    calculatedDuration =
+        calculatedDuration - Duration(milliseconds: totalPausedDuration);
+
+    // If currently manually paused, don't include current pause time
     if (isPaused && pausedAt != null) {
       final currentPauseDuration = now.difference(pausedAt!);
       calculatedDuration = calculatedDuration - currentPauseDuration;
     }
-    
+
+    // If currently idle paused, don't include current idle time
+    if (idlePausedAt != null) {
+      final currentIdleDuration = now.difference(idlePausedAt);
+      calculatedDuration = calculatedDuration - currentIdleDuration;
+    }
+
     // Ensure non-negative duration
     if (calculatedDuration.isNegative) {
       return Duration.zero;
     }
-    
+
     return calculatedDuration;
   }
-  
+
+  // Keep old getter for compatibility
+  Duration get duration => getDuration();
+
   // Format duration as HH:MM:SS
   String get formattedDuration {
     final d = duration;
     final totalHours = d.inHours;
     final minutes = d.inMinutes.remainder(60);
     final seconds = d.inSeconds.remainder(60);
-    final formatted = '${totalHours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    final formatted =
+        '${totalHours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
     return formatted;
   }
-  
+
   // Check if task is currently active
   bool get isActive => status == 'active';
   bool get isPaused => status == 'paused';
   bool get isCompleted => status == 'completed';
-  
+
   // Check if task is actually running right now (not scheduled for future, not paused)
   bool get isRunning {
     final now = DateTime.now();
     return isActive && !startTime.isAfter(now);
   }
-  
+
   // Convert to Map for database storage
   Map<String, dynamic> toMap() {
     return {
@@ -105,7 +117,7 @@ class TaskModel {
       'synced_to_odoo': syncedToOdoo ? 1 : 0,
     };
   }
-  
+
   // Create from Map (database retrieval)
   factory TaskModel.fromMap(Map<String, dynamic> map) {
     return TaskModel(
@@ -116,24 +128,28 @@ class TaskModel {
       taskDescription: map['task_description'] as String? ?? '',
       status: map['status'] as String,
       startTime: DateTime.fromMillisecondsSinceEpoch(map['start_time'] as int),
-      endTime: map['end_time'] != null 
+      endTime: map['end_time'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['end_time'] as int)
           : null,
-      pausedAt: map['paused_at'] != null 
+      pausedAt: map['paused_at'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['paused_at'] as int)
           : null,
       totalPausedDuration: map['total_paused_duration'] as int? ?? 0,
-      scheduledStartTime: map['scheduled_start_time'] != null 
-          ? DateTime.fromMillisecondsSinceEpoch(map['scheduled_start_time'] as int)
+      scheduledStartTime: map['scheduled_start_time'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(
+              map['scheduled_start_time'] as int,
+            )
           : null,
-      scheduledEndTime: map['scheduled_end_time'] != null 
-          ? DateTime.fromMillisecondsSinceEpoch(map['scheduled_end_time'] as int)
+      scheduledEndTime: map['scheduled_end_time'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(
+              map['scheduled_end_time'] as int,
+            )
           : null,
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
       syncedToOdoo: (map['synced_to_odoo'] as int) == 1,
     );
   }
-  
+
   // Convert to JSON for Odoo API
   Map<String, dynamic> toOdooJson() {
     return {
@@ -148,7 +164,7 @@ class TaskModel {
       'external_id': id, // Reference to local database
     };
   }
-  
+
   // Create a copy with updated fields
   TaskModel copyWith({
     String? id,

@@ -41,7 +41,7 @@ class _TaskListScreenState extends State<TaskListScreen> with SingleTickerProvid
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0d0d0d),
-      drawer: const AppDrawer(currentPage: DrawerPage.allTasks),
+      drawer: const AppDrawer(currentPage: DrawerPage.dashboard),
       appBar: AppBar(
         title: const Text('All Tasks', style: TextStyle(fontWeight: FontWeight.w600)),
         backgroundColor: const Color(0xFF0d0d0d),
@@ -202,7 +202,7 @@ class _TaskListScreenState extends State<TaskListScreen> with SingleTickerProvid
                         final index = entry.key;
                         final task = entry.value;
                         return _buildTaskCard(task, taskProvider, index);
-                      }).toList(),
+                      }),
                   ],
                 ),
               );

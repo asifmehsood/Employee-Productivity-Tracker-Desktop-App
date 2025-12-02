@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../dashboard_screen.dart';
-import '../task_list_screen.dart';
 import '../calendar_screen.dart';
 import '../profile_screen.dart';
 import '../settings_screen.dart';
@@ -15,7 +14,6 @@ import '../sign_in_screen.dart';
 enum DrawerPage {
   taskCreation,
   dashboard,
-  allTasks,
   workCalendar,
   profile,
   settings,
@@ -75,7 +73,7 @@ class AppDrawer extends StatelessWidget {
               _buildDrawerItem(
                 context: context,
                 icon: Icons.home,
-                title: 'Task Creation',
+                title: 'Work Session',
                 isSelected: currentPage == DrawerPage.taskCreation,
                 onTap: () {
                   Navigator.pop(context);
@@ -96,22 +94,6 @@ class AppDrawer extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const DashboardScreen()),
-                    );
-                  }
-                },
-                greenColor: greenColor,
-              ),
-              _buildDrawerItem(
-                context: context,
-                icon: Icons.list_alt,
-                title: 'All Tasks',
-                isSelected: currentPage == DrawerPage.allTasks,
-                onTap: () {
-                  Navigator.pop(context);
-                  if (currentPage != DrawerPage.allTasks) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const TaskListScreen()),
                     );
                   }
                 },
