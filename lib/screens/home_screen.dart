@@ -116,7 +116,12 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Consumer2<TaskProvider, AuthProvider>(
             builder: (context, taskProvider, authProvider, child) {
               return SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.only(
+                  left: 16.0,
+                  right: 16.0,
+                  top: 16.0,
+                  bottom: 10.0, // Fixed 10px bottom gap
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -178,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             Text(
               task.taskName,
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -291,7 +296,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 return Text(
                   formattedTime,
                   style: const TextStyle(
-                    fontSize: 48,
+                    fontSize: 36,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'monospace',
                   ),
@@ -305,7 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
               task.startTime.isAfter(now)
                   ? 'Will start: ${DateTimeHelper.formatDateTime(task.startTime)}'
                   : 'Started: ${DateTimeHelper.formatDateTime(task.startTime)}',
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
               textAlign: TextAlign.center,
             ),
 
@@ -314,7 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // Screenshot Info
             if (timerService.isRunning)
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: const Color(0xFF2d7a47).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
@@ -356,7 +361,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 28),
 
             // Action Buttons
             Row(
@@ -380,7 +385,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 // Show Stop & Complete button when task has started
                 if (!task.startTime.isAfter(now)) ...[
-                  const SizedBox(width: 24),
+                  const SizedBox(width: 16),
                   _StopButton(
                     onPressed: () async {
                       await _stopTask(taskProvider, task.id);
@@ -415,13 +420,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(60.0),
+          padding: const EdgeInsets.all(32.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Timer Display (00:00:00)
               Container(
-                padding: const EdgeInsets.all(32),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
@@ -440,23 +445,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: const Icon(
                   Icons.timer_outlined,
-                  size: 80,
+                  size: 60,
                   color: Color(0xFF3fd884),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 20),
               
               // Timer Text
               const Text(
                 '00:00:00',
                 style: TextStyle(
-                  fontSize: 56,
+                  fontSize: 40,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'monospace',
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 'Ready to track your work',
                 style: TextStyle(
@@ -465,14 +470,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 24),
               
               // Play Button
               _PlayButton(
                 onPressed: () => _startWorkSession(context, authProvider),
               ),
               
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               
               // Info Cards
               Row(
@@ -774,8 +779,8 @@ class _PlayButtonState extends State<_PlayButton> {
         child: GestureDetector(
           onTap: widget.onPressed,
           child: Container(
-            width: 100,
-            height: 100,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
@@ -794,7 +799,7 @@ class _PlayButtonState extends State<_PlayButton> {
             child: const Icon(
               Icons.play_arrow_rounded,
               color: Colors.white,
-              size: 50,
+              size: 40,
             ),
           ),
         ),
@@ -828,8 +833,8 @@ class _PauseButtonState extends State<_PauseButton> {
         child: GestureDetector(
           onTap: widget.onPressed,
           child: Container(
-            width: 100,
-            height: 100,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
@@ -839,16 +844,16 @@ class _PauseButtonState extends State<_PauseButton> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.orange.withOpacity(_isHovered ? 0.4 : 0.5),
-                  blurRadius: _isHovered ? 35 : 25,
-                  spreadRadius: _isHovered ? 6 : 3,
+                  color: Colors.orange.withOpacity(_isHovered ? 0.3 : 0.2),
+                  blurRadius: _isHovered ? 20 : 15,
+                  spreadRadius: _isHovered ? 2 : 1,
                 ),
               ],
             ),
             child: const Icon(
               Icons.pause_rounded,
               color: Colors.white,
-              size: 50,
+              size: 40,
             ),
           ),
         ),
@@ -882,8 +887,8 @@ class _StopButtonState extends State<_StopButton> {
         child: GestureDetector(
           onTap: widget.onPressed,
           child: Container(
-            width: 100,
-            height: 100,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
@@ -893,16 +898,16 @@ class _StopButtonState extends State<_StopButton> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.red.withOpacity(_isHovered ? 0.4 : 0.5),
-                  blurRadius: _isHovered ? 35 : 25,
-                  spreadRadius: _isHovered ? 6 : 3,
+                  color: Colors.red.withOpacity(_isHovered ? 0.3 : 0.2),
+                  blurRadius: _isHovered ? 20 : 15,
+                  spreadRadius: _isHovered ? 2 : 1,
                 ),
               ],
             ),
             child: const Icon(
               Icons.stop_rounded,
               color: Colors.white,
-              size: 50,
+              size: 40,
             ),
           ),
         ),
