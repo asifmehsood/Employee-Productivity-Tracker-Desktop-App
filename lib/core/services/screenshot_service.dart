@@ -1,11 +1,17 @@
 /// Screenshot Service
-/// Handles screenshot capture using screen_capturer plugin
-/// Supports Windows, macOS, and Linux desktop platforms
+/// Handles screenshot capture with platform-specific implementations
+/// - Windows: Silent capture using GDI+ (no sound/flash)
+/// - macOS/Linux: Uses screen_capturer plugin
 library;
 
 import 'dart:io';
+import 'dart:ffi';
+import 'dart:typed_data';
+import 'package:ffi/ffi.dart';
+import 'package:win32/win32.dart';
 import 'package:screen_capturer/screen_capturer.dart';
 import 'package:uuid/uuid.dart';
+import 'package:image/image.dart' as img;
 import '../utils/file_helper.dart';
 import '../constants/app_constants.dart';
 import '../../models/screenshot_model.dart';
@@ -17,6 +23,9 @@ class ScreenshotService {
 
   /// Capture a screenshot and save it locally
   /// Returns ScreenshotModel if successful, null otherwise
+  /// Uses platform-specific implementation:
+  /// - Windows: Silent GDI+ capture (no sound/flash)
+  /// - macOS/Linux: screen_capturer plugin
   Future<ScreenshotModel?> captureScreenshot(String taskId) async {
     try {
       // Generate unique filename
@@ -24,14 +33,19 @@ class ScreenshotService {
       final fileName = '$screenshotId.${AppConstants.screenshotFormat}';
       final filePath = await FileHelper.getScreenshotPath(fileName);
 
-      // Capture the screenshot (single attempt - no retry to avoid duplicates)
-      final capturedData = await _screenCapturer.capture(
-        mode: CaptureMode.screen,
-        imagePath: filePath,
-        silent: true, // Capture silently without notification
-      );
+      // Use platform-specific capture method
+      bool success = false;
+      if (Platform.isWindows) {
+        // Windows: Use silent GDI+ capture
+        print('Using Windows GDI+ capture (silent)');
+        success = await _captureWindowsSilent(filePath);
+      } else {
+        // macOS/Linux: Use screen_capturer plugin
+        print('Using screen_capturer plugin (${Platform.operatingSystem})');
+        success = await _captureUsingPlugin(filePath);
+      }
 
-      if (capturedData != null && capturedData.imagePath != null) {
+      if (success) {
         // Create screenshot model
         final screenshot = ScreenshotModel(
           id: screenshotId,
@@ -52,6 +66,147 @@ class ScreenshotService {
     } catch (e) {
       print('Error capturing screenshot: $e');
       return null;
+    }
+  }
+
+  /// Capture screenshot using screen_capturer plugin (macOS/Linux)
+  Future<bool> _captureUsingPlugin(String filePath) async {
+    try {
+      final capturedData = await _screenCapturer.capture(
+        mode: CaptureMode.screen,
+        imagePath: filePath,
+        silent: true, // Works well on macOS/Linux
+      );
+      return capturedData != null && capturedData.imagePath != null;
+    } catch (e) {
+      print('Plugin capture error: $e');
+      return false;
+    }
+  }
+
+  /// Capture screenshot using Windows GDI+ (100% silent, no effects)
+  Future<bool> _captureWindowsSilent(String filePath) async {
+    try {
+      // Get screen device context
+      final screenDC = GetDC(NULL);
+      if (screenDC == 0) {
+        print('Failed to get screen DC');
+        return false;
+      }
+
+      // Create compatible DC for bitmap
+      final memoryDC = CreateCompatibleDC(screenDC);
+      if (memoryDC == 0) {
+        ReleaseDC(NULL, screenDC);
+        print('Failed to create memory DC');
+        return false;
+      }
+
+      try {
+        // Get screen dimensions
+        final screenWidth = GetSystemMetrics(SM_CXSCREEN);
+        final screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+        // Create bitmap to store screenshot
+        final bitmap = CreateCompatibleBitmap(screenDC, screenWidth, screenHeight);
+        if (bitmap == 0) {
+          print('Failed to create bitmap');
+          return false;
+        }
+
+        // Select bitmap into memory DC
+        final oldBitmap = SelectObject(memoryDC, bitmap);
+
+        // Copy screen to bitmap (THIS IS COMPLETELY SILENT!)
+        final bitBltResult = BitBlt(
+          memoryDC,
+          0,
+          0,
+          screenWidth,
+          screenHeight,
+          screenDC,
+          0,
+          0,
+          SRCCOPY,
+        );
+
+        if (bitBltResult == 0) {
+          SelectObject(memoryDC, oldBitmap);
+          DeleteObject(bitmap);
+          print('Failed to copy screen to bitmap');
+          return false;
+        }
+
+        // Get bitmap data
+        final bitmapInfo = calloc<BITMAPINFO>();
+        bitmapInfo.ref.bmiHeader.biSize = sizeOf<BITMAPINFOHEADER>();
+        bitmapInfo.ref.bmiHeader.biWidth = screenWidth;
+        bitmapInfo.ref.bmiHeader.biHeight = -screenHeight; // Top-down bitmap
+        bitmapInfo.ref.bmiHeader.biPlanes = 1;
+        bitmapInfo.ref.bmiHeader.biBitCount = 32; // BGRA format
+        bitmapInfo.ref.bmiHeader.biCompression = BI_RGB;
+
+        // Calculate buffer size
+        final bufferSize = screenWidth * screenHeight * 4; // 4 bytes per pixel (BGRA)
+        final buffer = calloc<Uint8>(bufferSize);
+
+        // Get bitmap bits
+        final linesRead = GetDIBits(
+          memoryDC,
+          bitmap,
+          0,
+          screenHeight,
+          buffer,
+          bitmapInfo,
+          DIB_RGB_COLORS,
+        );
+
+        if (linesRead == 0) {
+          calloc.free(buffer);
+          calloc.free(bitmapInfo);
+          SelectObject(memoryDC, oldBitmap);
+          DeleteObject(bitmap);
+          print('Failed to get bitmap bits');
+          return false;
+        }
+
+        // Convert BGRA to RGBA for image package
+        final pixels = buffer.asTypedList(bufferSize);
+        final rgbaPixels = Uint8List(bufferSize);
+        for (int i = 0; i < bufferSize; i += 4) {
+          rgbaPixels[i] = pixels[i + 2];     // R = B
+          rgbaPixels[i + 1] = pixels[i + 1]; // G = G
+          rgbaPixels[i + 2] = pixels[i];     // B = R
+          rgbaPixels[i + 3] = pixels[i + 3]; // A = A
+        }
+
+        // Create image and encode to PNG
+        final image = img.Image.fromBytes(
+          width: screenWidth,
+          height: screenHeight,
+          bytes: rgbaPixels.buffer,
+          numChannels: 4,
+        );
+        final pngBytes = img.encodePng(image);
+
+        // Write to file
+        await File(filePath).writeAsBytes(pngBytes);
+
+        // Cleanup
+        calloc.free(buffer);
+        calloc.free(bitmapInfo);
+        SelectObject(memoryDC, oldBitmap);
+        DeleteObject(bitmap);
+
+        return true;
+      } finally {
+        // Always cleanup DCs
+        DeleteDC(memoryDC);
+        ReleaseDC(NULL, screenDC);
+      }
+    } catch (e) {
+      print('Windows GDI+ capture error: $e');
+      return false;
     }
   }
 

@@ -31,6 +31,8 @@ class TimerService {
   Function(bool isIdle)? onIdleStateChanged;
   // Callback for idle duration update
   Function(int idleDurationMs)? onIdleDurationCalculated;
+  // Callback for screenshot captured notification
+  Function(String message)? onScreenshotCaptured;
 
   /// Get current running status
   bool get isRunning => _isRunning;
@@ -293,6 +295,8 @@ class TimerService {
 
       if (screenshot != null) {
         print('Screenshot captured successfully: ${screenshot.id}');
+        // Notify UI about screenshot capture
+        onScreenshotCaptured?.call('📸 Screenshot captured');
       } else {
         print('Failed to capture screenshot');
       }

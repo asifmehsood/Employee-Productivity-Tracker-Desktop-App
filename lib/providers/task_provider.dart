@@ -89,6 +89,11 @@ class TaskProvider with ChangeNotifier {
       }
     };
 
+    // Setup screenshot captured notification
+    _timerService.onScreenshotCaptured = (message) {
+      onShowNotification?.call(message, isWarning: false);
+    };
+
     await loadTasks();
     await _loadActiveTask();
   }

@@ -59,9 +59,12 @@ dependencies:
   shared_preferences: ^2.2.2
   crypto: ^3.0.3
   
-  # Windows API for window tracking
+  # Windows API for window tracking and screenshot
   win32: ^5.5.0
   ffi: ^2.1.0
+  
+  # Image processing for silent screenshot encoding
+  image: ^4.1.7
 
 dev_dependencies:
   flutter_test:

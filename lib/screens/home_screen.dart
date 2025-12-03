@@ -34,16 +34,34 @@ class _HomeScreenState extends State<HomeScreen> {
                   Icon(
                     isWarning ? Icons.warning_amber : Icons.check_circle,
                     color: Colors.white,
+                    size: 20,
                   ),
                   const SizedBox(width: 12),
-                  Expanded(child: Text(message)),
+                  Expanded(
+                    child: Text(
+                      message,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               backgroundColor: isWarning
                   ? Colors.orange[700]
                   : const Color(0xFF1c4d2c),
-              duration: const Duration(seconds: 3),
+              duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.only(
+                bottom: 20,
+                right: 20,
+                left: 20,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 6,
             ),
           );
         }
