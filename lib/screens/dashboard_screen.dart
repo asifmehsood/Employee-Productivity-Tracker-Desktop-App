@@ -824,7 +824,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         elevation: 8,
         shadowColor: const Color(0xFF1c4d2c).withOpacity(0.3),
         child: SizedBox(
-          height: 290,
+          height: 300,
           child: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -874,18 +874,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }  Widget _buildQuickInsightsCard(TaskProvider taskProvider) {
     final filteredTasks = _getFilteredTasks(taskProvider);
-    // final totalTasks = filteredTasks.length;
-    final completedTasks = filteredTasks.where((t) => t.status == 'completed').length;
-    final activeTasks = taskProvider.runningTasks.length;
+    final totalSessions = filteredTasks.length;
+    final completedSessions = filteredTasks.where((t) => t.status == 'completed').length;
+    final activeSessions = taskProvider.runningTasks.length;
     
-    // Calculate average task duration
-    final completedTasksList = filteredTasks.where((t) => t.status == 'completed');
-    double totalDuration = 0;
-    for (var task in completedTasksList) {
-      totalDuration += task.duration.inMinutes;
+    // Calculate total work time
+    double totalMinutes = 0;
+    for (var task in filteredTasks) {
+      totalMinutes += task.activeDuration.inMinutes;
     }
-    final avgDuration = completedTasksList.isNotEmpty 
-        ? (totalDuration / completedTasksList.length).toInt()
+    final totalHours = (totalMinutes / 60).toStringAsFixed(1);
+    
+    // Calculate average session duration
+    final avgMinutes = filteredTasks.isNotEmpty 
+        ? (totalMinutes / filteredTasks.length).toInt()
         : 0;
     
     // Calculate productivity score from app usage (real-time)
@@ -896,9 +898,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         elevation: 8,
         shadowColor: const Color(0xFF1c4d2c).withOpacity(0.3),
         child: SizedBox(
-          height: 370,
+          height: 300,
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(18.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -940,14 +942,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ? const Color(0xFFf39c12)
                                 : const Color(0xFFe74c3c),
                         child: SizedBox(
-                          width: 100,
-                          height: 100,
+                          width: 200,
+                          height: 200,
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
                               CircularProgressIndicator(
                                 value: productivityScore / 100,
-                                strokeWidth: 8,
+                                strokeWidth: 16,
                                 backgroundColor: const Color(0xFF2a2a2a),
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   productivityScore >= 80
@@ -965,15 +967,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       '$productivityScore%',
                                       style: const TextStyle(
                                         color: Colors.white,
-                                        fontSize: 24,
+                                        fontSize: 52,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
+                                    const SizedBox(height: 4),
                                     Text(
-                                      'Score',
+                                      'Productivity Score',
                                       style: TextStyle(
                                         color: Colors.grey[500],
-                                        fontSize: 12,
+                                        fontSize: 16,
                                       ),
                                     ),
                                   ],
@@ -987,26 +990,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 12),
                   ],
                 ),
-              ),              // Stats Grid
-              _buildInsightRow(
-                Icons.task_alt,
-                'Active Tasks',
-                activeTasks.toString(),
-                const Color(0xFF1c4d2c),
-              ),
-              const SizedBox(height: 10),
-              _buildInsightRow(
-                Icons.check_circle_outline,
-                'Completed',
-                completedTasks.toString(),
-                const Color(0xFF2d7a47),
-              ),
-              const SizedBox(height: 10),
-              _buildInsightRow(
-                Icons.schedule,
-                'Avg Duration',
-                '${avgDuration}min',
-                const Color(0xFF3a9254),
               ),
             ],
           ),
@@ -1371,7 +1354,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Projects',
+                'Sessions',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -1383,7 +1366,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: tasks.isEmpty
                   ? const Center(
                       child: Text(
-                        'No completed tasks yet',
+                        'No completed sessions yet',
                         style: TextStyle(
                           color: Color(0xFFb0b0b0),
                           fontSize: 14,
