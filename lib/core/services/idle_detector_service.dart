@@ -24,7 +24,7 @@ class IdleDetectorService {
 
   // Configuration
   final Duration idleThreshold = const Duration(minutes: 1);
-  final Duration checkInterval = const Duration(seconds: 1);
+  final Duration checkInterval = const Duration(milliseconds: 500); // Check twice per second for faster response
 
   /// Check if user is currently idle
   bool get isIdle => _isIdle;
@@ -99,11 +99,7 @@ class IdleDetectorService {
 
         // If system idle is less than 2 seconds, user is currently active
         if (systemIdleDuration < const Duration(seconds: 2)) {
-          // User is active - update last activity time
-          _lastActivityTime = DateTime.now();
-          print('User is ACTIVE - last activity updated to: $_lastActivityTime');
-
-          // If we were idle, trigger active callback
+          // If we were idle, trigger active callback BEFORE updating last activity time
           if (_isIdle) {
             final timeSinceLastActivity = DateTime.now().difference(_lastActivityTime);
             print('\n>>> USER BECAME ACTIVE <<<');
@@ -111,6 +107,10 @@ class IdleDetectorService {
             _isIdle = false;
             onActive?.call();
           }
+          
+          // User is active - update last activity time AFTER calculating idle duration
+          _lastActivityTime = DateTime.now();
+          print('User is ACTIVE - last activity updated to: $_lastActivityTime');
         } else {
           // System is idle - check if idle for long enough SINCE last activity
           final timeSinceLastActivity = DateTime.now().difference(_lastActivityTime);
