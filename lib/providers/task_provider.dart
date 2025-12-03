@@ -9,11 +9,13 @@ import 'package:uuid/uuid.dart';
 import '../models/task_model.dart';
 import '../core/services/database_helper.dart';
 import '../core/services/timer_service.dart';
+import '../core/services/notification_service.dart';
 import '../core/constants/app_constants.dart';
 
 class TaskProvider with ChangeNotifier {
   final DatabaseHelper _db = DatabaseHelper.instance;
   final TimerService _timerService = TimerService();
+  final NotificationService _notificationService = NotificationService.instance;
   final _uuid = const Uuid();
 
   List<TaskModel> _tasks = [];
@@ -45,6 +47,7 @@ class TaskProvider with ChangeNotifier {
   /// Initialize provider and load tasks
   Future<void> initialize() async {
     await _timerService.initialize();
+    await _notificationService.initialize();
 
     // Setup idle state change listener
     _timerService.onIdleStateChanged = (isIdle) {
@@ -60,10 +63,8 @@ class TaskProvider with ChangeNotifier {
           _activeTask = _activeTask!.copyWith(pausedAt: _idlePausedAt);
         }
 
-        onShowNotification?.call(
-          'You\'ve been idle for 1 minute. Timer paused automatically.',
-          isWarning: true,
-        );
+        // Show native OS notification
+        _notificationService.showIdleNotification();
       } else {
         // Clear idle pause time and pausedAt when resuming
         _idlePausedAt = null;
@@ -72,10 +73,8 @@ class TaskProvider with ChangeNotifier {
         }
         print('User active again - timer resumed');
 
-        onShowNotification?.call(
-          'Welcome back! Timer resumed.',
-          isWarning: false,
-        );
+        // Show native OS notification
+        _notificationService.showActiveNotification();
       }
       notifyListeners();
     };
@@ -91,7 +90,8 @@ class TaskProvider with ChangeNotifier {
 
     // Setup screenshot captured notification
     _timerService.onScreenshotCaptured = (message) {
-      onShowNotification?.call(message, isWarning: false);
+      // Show native OS notification
+      _notificationService.showScreenshotNotification();
     };
 
     await loadTasks();
@@ -237,6 +237,10 @@ class TaskProvider with ChangeNotifier {
       notifyListeners();
       print('Listeners notified');
       print('Task started: ${task.taskName}');
+      
+      // Show native OS notification
+      _notificationService.showWorkSessionStarted();
+      
       print('=== TASK CREATION COMPLETE ===\n');
       return task;
     } catch (e) {
